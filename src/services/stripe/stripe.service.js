@@ -1,70 +1,99 @@
 import makeDebug from 'debug'
 import _ from 'lodash'
-import chai, { util, expect } from 'chai'
-import chailint from 'chai-lint'
 import core, { kalisio, permissions } from 'kCore'
-import feathers from 'feathers'
-import rest from 'feathers-rest'
-import hooks from 'feathers-hooks'
-import socketio from 'feathers-socketio'
-import stripe from 'feathers-stripe'
-import bodyParser from 'body-parser';
-import errorHandler from 'feathers-errors/handler';
 
 const debug = makeDebug('kalisio:kBilling:stripe:service')
 
-export default function (name, kalisioApp, options) {
-  let userService, userObject
+export default function (name, app, options) {
+  let userService = app.getService('users')
 
-  var app = feathers()
-    .configure(rest())
-    .configure(socketio())
-    .configure(hooks())
-    .use(bodyParser.json())
-    .use(bodyParser.urlencoded({ extended: true }))
-    .use('/stripe/customer', stripe.customer({ secretKey: 'sk_test_J9ttuxferQkOZdlmYQCc6pkx' }))
+  return {
+    create (data, params) {
+      return new Promise((resolve, reject) => {
+        let userObject
+        let customerService = app.service('stripe/customer');
+        let tokenService = app.service('stripe/tokens');
 
+        let customer = {
+          email: data.email,
+          source: 'tok_visa',
+        }
 
+        customerService.create(customer).then(result => {
+          return userService.create({ email: result.email, name: data.email, stripe_id:result.id }, { checkAuthorisation: true })
+          .then(user => {
+            userObject = user
+            return userService.find({ query: { 'profile.name': result.email }, user: userObject, checkAuthorisation: true })
+          })
+        }).catch(error => {
+          console.log('Error creating customer', error);
+        });
 
-  function validateCustomer() {
-    return function(hook) {
-      console.log('Validating customer code goes here');
-    };
+        resolve();
+      })
+    },
+    remove (email, params) {
+      return new Promise((resolve, reject) => {
+        let userObject;
+        let customerService = app.service('stripe/customer');
+
+        userService.find({ query: { email: email }})
+        .then(users => {
+          userObject = users.data[0]
+          if (userObject) {
+            customerService.remove(
+              userObject.stripe_id,
+              function(err, confirmation) {
+                console.log(err);
+              }
+            )
+            .then((result)=>{
+              userService.remove(userObject._id, {
+                user: userObject,
+                checkAuthorisation: true
+              })
+              .catch(error => {
+                console.log('Error removing customer from db', error);
+              });
+
+            })
+            .catch(error => {
+              console.log('Error removing customer', error);
+            });
+          }
+        })
+
+        resolve();
+      })
+    },
+    charge (src, params) {
+      return new Promise((resolve, reject) => {
+        let chargeService = app.service('stripe/charges');
+
+        let charge = {
+          source: src, // obtained with Stripe.js
+          description: "Charge publisher"
+        };
+
+        chargeService.create(charge).then(result => {
+          console.log('Charge created', result);
+        }).catch(error => {
+          console.log('Error creating charge', error);
+        });
+
+        resolve();
+      })
+    },
+    setup (app) {
+      const config = app.get('stripe')
+      if (config && config.cache) {
+        // Store abilities of the N most active users in LRU cache (defaults to 1000)
+        this.cache = new LruCache(config.cache.maxUsers || 1000)
+        debug('Using LRU cache for user abilities')
+      } else {
+        debug('Do not use LRU cache for user abilities')
+      }
+    },
   }
-
-  var customerService = app.service('stripe/customer');
-
-  customerService.before({
-    create: [validateCustomer()]
-  });
-
-  var customer = {
-    email: 'jenny@example.com',
-    // source: 'tok_87rau6axWXeqLq',
-  }
- 
-
-  kalisioApp.configure(core)
-  userService = kalisioApp.getService('users')
-  expect(userService).toExist()
-
-
-  customerService.create(customer).then(result => {
-    return userService.create({ email: result.email, name: result.email }, { checkAuthorisation: true })
-    .then(user => {
-      userObject = user
-      return userService.find({ query: { 'profile.name': result.email }, user: userObject, checkAuthorisation: true })
-    })
-    .then(users => {
-      expect(users.data.length > 0).beTrue()
-    })
-  }).catch(error => {
-    console.log('Error creating charge', error);
-  });
-
-  const servicePath = kalisioApp.get('apiPath') + '/stripe'
-
-
-  return kalisioApp.service(servicePath)
 
 }

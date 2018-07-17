@@ -40,5 +40,8 @@ module.exports = {
     accessKeyId: process.env.S3_ACCESS_KEY,
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
     bucket: process.env.S3_BUCKET
+  },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
   }
 }

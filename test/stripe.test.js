@@ -10,7 +10,7 @@ import errorHandler from 'feathers-errors/handler';
 import billing from '../src'
 
 describe('kBilling:stripe', () => {
-  let kalisioApp, server, port,
+  let app, server, port,
     stripeService, userService
   
   before(() => {
@@ -22,14 +22,14 @@ describe('kBilling:stripe', () => {
     // Then rules for billing
     // TODO
 
-    kalisioApp = kalisio()
-    port = kalisioApp.get('port')
+    app = kalisio()
+    port = app.get('port')
 
-    kalisioApp.hooks({
+    app.hooks({
       before: { all: [hooks.authorise] }
     })
     // Register authorisation hook
-    return kalisioApp.db.connect()
+    return app.db.connect()
   })
 
   it('is CommonJS compatible', () => {
@@ -37,10 +37,53 @@ describe('kBilling:stripe', () => {
   })
 
   it('registers the billing', (done) => {
-    kalisioApp.configure(billing)
-    // Now kalisioApp is configured launch the server
-    server = kalisioApp.listen(port)
+    app.configure(core)
+    userService = app.getService('users')
+    expect(userService).toExist()
+
+    app.use('/stripe/customer', stripe.customer({ secretKey: app.get('stripe').secretKey }))
+    app.use('/stripe/tokens', stripe.customer({ secretKey: app.get('stripe').secretKey }))
+    app.use('/stripe/charges', stripe.customer({ secretKey: app.get('stripe').secretKey }))
+
+    app.configure(billing)
+    stripeService = app.getService('stripe')
+    expect(stripeService).toExist()
+    // Now app is configured launch the server
+    server = app.listen(port)
     server.once('listening', _ => done())
   })
+
+  it('create customer', () => {
+    return stripeService.create({
+      email: 'publisher@kalisio.xyz',
+      name: 'publisher-user'
+    })
+    .catch(error => {
+      expect(error).toExist()
+      done()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('remove customer', () => {
+    return stripeService.remove('publisher@kalisio.xyz')
+    .catch(error => {
+      expect(error).toExist()
+      done()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('create charge', () => {
+    return stripeService.charge('tok_visa')
+    .catch(error => {
+      expect(error).toExist()
+      done()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
 
 })
