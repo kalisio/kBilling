@@ -1,13 +1,8 @@
 import chai, { util, expect } from 'chai'
 import chailint from 'chai-lint'
 import core, { kalisio, hooks, permissions } from 'kCore'
-import feathers from 'feathers'
-import rest from 'feathers-rest'
-import socketio from 'feathers-socketio'
 import stripe from 'feathers-stripe'
-import bodyParser from 'body-parser';
-import errorHandler from 'feathers-errors/handler';
-import billing from '../src'
+import billing, { billingHooks } from '../src'
 
 describe('kBilling:stripe', () => {
   let app, server, port,
@@ -37,15 +32,8 @@ describe('kBilling:stripe', () => {
   })
 
   it('registers the billing', (done) => {
-    app.configure(core)
-    userService = app.getService('users')
-    expect(userService).toExist()
-
-    app.use('/stripe/customer', stripe.customer({ secretKey: app.get('stripe').secretKey }))
-    app.use('/stripe/tokens', stripe.customer({ secretKey: app.get('stripe').secretKey }))
-    app.use('/stripe/charges', stripe.customer({ secretKey: app.get('stripe').secretKey }))
-
     app.configure(billing)
+
     stripeService = app.getService('stripe')
     expect(stripeService).toExist()
     // Now app is configured launch the server
@@ -55,11 +43,14 @@ describe('kBilling:stripe', () => {
 
   it('create customer', () => {
     return stripeService.create({
+      action: 'customer',
       email: 'publisher@kalisio.xyz',
-      name: 'publisher-user'
+      name: 'publisher-user',
+      src: 'tok_visa'
     })
     .catch(error => {
       expect(error).toExist()
+      console.log(error);
       done()
     })
   })
@@ -67,9 +58,10 @@ describe('kBilling:stripe', () => {
   .timeout(5000)
 
   it('remove customer', () => {
-    return stripeService.remove('publisher@kalisio.xyz')
+    return stripeService.remove({action:'customer', id:'cus_DFltQs7CXyVlJH'})
     .catch(error => {
       expect(error).toExist()
+      console.log(error);
       done()
     })
   })
@@ -77,9 +69,46 @@ describe('kBilling:stripe', () => {
   .timeout(5000)
 
   it('create charge', () => {
-    return stripeService.charge('tok_visa')
+    app.hooks({
+      before: { all: [billingHooks.validateCharge] }
+    })
+    return stripeService.create({action:'charge', src:'tok_visa'})
     .catch(error => {
       expect(error).toExist()
+      console.log(error);
+      done()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('create subscription', () => {
+    return stripeService.create({action:'subscription', idCustomer:'cus_DG84janbD4WQpc', plan:'test'})
+    .catch(error => {
+      expect(error).toExist()
+      console.log(error);
+      done()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('update subscription', () => {
+    return stripeService.update({action:'subscription', id:'sub_DG87EwNdOtSZaK', params: { tax_percent: 10 }}, {})
+    .catch(error => {
+      expect(error).toExist()
+      console.log(error);
+      done()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('create invoice items', () => {
+    return stripeService.create({action:'invoiceItems', params: {customer:'cus_DG84janbD4WQpc', amount: 2500, currency: "usd", description: "One-time setup fee"}})
+    .catch(error => {
+      expect(error).toExist()
+      console.log(error);
       done()
     })
   })

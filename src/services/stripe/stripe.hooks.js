@@ -1,7 +1,8 @@
+import { validateCharge } from '../../hooks'
 
 module.exports = {
   before: {
-    all: [],
+    all: [ disallow('external') ],
     find: [],
     get: [],
     create: [],
