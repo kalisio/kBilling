@@ -6,112 +6,111 @@ import stripe from 'feathers-stripe'
 const debug = makeDebug('kalisio:kBilling:stripe:service')
 
 export default function (name, app, options) {
-
   return {
     createCustomer (data, params) {
       return new Promise((resolve, reject) => {
-        let customerService = app.service('stripe/customer');
+        let customerService = app.service('stripe/customer')
 
         let customer = {
           email: data.email,
-          source: data.src,
+          source: data.src
         }
 
         customerService.create(customer).then(result => {
-          console.log('Customer created', result);
+          console.log('Customer created', result)
         }).catch(error => {
-          console.log('Error creating customer', error);
-        });
+          console.log('Error creating customer', error)
+        })
 
-        resolve();
+        resolve()
       })
     },
     removeCustomer (id, params) {
       return new Promise((resolve, reject) => {
-        let customerService = app.service('stripe/customer');
+        let customerService = app.service('stripe/customer')
 
         customerService.remove(
           id,
-          function(err, confirmation) {
-            console.log(err);
+          function (err, confirmation) {
+            console.log(err)
           }
         )
         .catch(error => {
-          console.log('Error removing customer', error);
-        });
+          console.log('Error removing customer', error)
+        })
 
-        resolve();
+        resolve()
       })
     },
     createCharge (src, params) {
       return new Promise((resolve, reject) => {
-        let chargeService = app.service('stripe/charges');
+        let chargeService = app.service('stripe/charges')
 
         let charge = {
           amount: 400,
-          currency: "cad",
+          currency: 'cad',
           source: src,
-          description: "Charge publisher"
-        };
+          description: 'Charge publisher'
+        }
 
         chargeService.create(charge).then(result => {
-          console.log('Charge created', result);
+          console.log('Charge created', result)
         }).catch(error => {
-          console.log('Error creating charge', error);
-        });
+          console.log('Error creating charge', error)
+        })
 
-        resolve();
+        resolve()
       })
     },
     createSubscription (data, params) {
       return new Promise((resolve, reject) => {
-        let subscriptionService = app.service('stripe/subscription');
+        let subscriptionService = app.service('stripe/subscription')
 
         let subscription = {
           customer: data.idCustomer,
           items: [
             {
-              plan: data.plan,
-            },
+              plan: data.plan
+            }
           ]
-        };
+        }
 
         subscriptionService.create(subscription).then(result => {
-          console.log('Subscription created', result);
+          console.log('Subscription created', result)
         }).catch(error => {
-          console.log('Error creating subscription', error);
-        });
+          console.log('Error creating subscription', error)
+        })
 
-        resolve();
+        resolve()
       })
     },
     updateSubscription (id, params) {
       return new Promise((resolve, reject) => {
-        let subscriptionService = app.service('stripe/subscription');
+        let subscriptionService = app.service('stripe/subscription')
 
         subscriptionService.update(id, params).then(result => {
-          console.log('Subscription updated', result);
+          console.log('Subscription updated', result)
         }).catch(error => {
-          console.log('Error updating subscription', error);
-        });
+          console.log('Error updating subscription', error)
+        })
 
-        resolve();
+        resolve()
       })
     },
     createInvoiceItems (params) {
       return new Promise((resolve, reject) => {
-        let invoiceService = app.service('stripe/invoice-items');
+        let invoiceService = app.service('stripe/invoice-items')
 
         invoiceService.create(params,
-          function(err, confirmation) {
-            console.log(err);
+          function (err, confirmation) {
+            console.log(err)
           }
         )
         .catch(error => {
-          console.log('Error creating invoice', error);
-        });
+          console.log('Error creating invoice', error)
+        })
 
-        resolve();
+        resolve()
       })
     },
     setup (app) {
@@ -153,7 +152,6 @@ export default function (name, app, options) {
         case 'customer':
           return this.removeCustomer(data.id, params)
       }
-    },
+    }
   }
-
 }
