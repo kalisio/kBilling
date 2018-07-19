@@ -12,9 +12,9 @@
 ## Installation
 
 ```
-npm install kMap --save
+npm install kBilling --save
 // Or with Yarn
-yarn add kMap
+yarn add kBilling
 ```
 
 ## Documentation
