@@ -17,20 +17,6 @@ npm install kMap --save
 yarn add kMap
 ```
 
-## Required service operations
-
-If a organisation owner subscribe to a paid plan what should be done:
-1. add a stripe payment method (i.e. card) if none already provided
-  * redirection on a specific form on the client > direct call to the billing service
-2. create the stripe customer if not already done
-3. subscribe the organisation to the new paid plan
-
-If a organisation owner subscribe to a free plan what should be done:
-1. unsubscribe the organisation to the old paid plan
-
-When a organisation is destroyed:
-1. remove the stripe customer > hook calling the billing service
-
 ## Documentation
 
 The [kDocs](https://kalisio.gitbooks.io/kalisio/) are loaded with awesome stuff and tell you everything you need to know about using and configuring it.
