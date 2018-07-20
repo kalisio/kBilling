@@ -1,1 +1,1 @@
-export * from './hooks.stripe'
+export * from './hooks.stripeBilling'

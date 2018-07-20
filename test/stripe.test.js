@@ -1,7 +1,6 @@
 import chai, { util, expect } from 'chai'
 import chailint from 'chai-lint'
 import core, { kalisio, hooks, permissions } from 'kCore'
-import stripe from 'feathers-stripe'
 import billing, { billingHooks } from '../src'
 
 describe('kBilling:stripe', () => {
@@ -34,7 +33,7 @@ describe('kBilling:stripe', () => {
   it('registers the billing', (done) => {
     app.configure(billing)
 
-    stripeService = app.getService('stripe')
+    stripeService = app.getService('stripeBilling')
     expect(stripeService).toExist()
     // Now app is configured launch the server
     server = app.listen(port)
@@ -52,13 +51,13 @@ describe('kBilling:stripe', () => {
       expect(error).toExist()
       console.log(error)
       done()
-    })
+    });
   })
   // Let enough time to process
   .timeout(5000)
 
   it('remove customer', () => {
-    return stripeService.remove({action: 'customer', id: 'cus_DFltQs7CXyVlJH'})
+    return stripeService.remove({action: 'customer', id: 'cus_DG7BdGMLB4F79E'})
     .catch(error => {
       expect(error).toExist()
       console.log(error)

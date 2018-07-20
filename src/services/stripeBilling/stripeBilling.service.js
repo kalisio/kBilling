@@ -18,28 +18,27 @@ export default function (name, app, options) {
 
         customerService.create(customer).then(result => {
           console.log('Customer created', result)
+          resolve(result)
         }).catch(error => {
           console.log('Error creating customer', error)
+          reject(error)
         })
 
-        resolve()
       })
     },
     removeCustomer (id, params) {
       return new Promise((resolve, reject) => {
         let customerService = app.service('stripe/customer')
 
-        customerService.remove(
-          id,
-          function (err, confirmation) {
-            console.log(err)
-          }
-        )
-        .catch(error => {
+        customerService.remove(id)
+        .then(result => {
+          console.log('Customer removed', result)
+          resolve(result)
+        }).catch(error => {
           console.log('Error removing customer', error)
+          reject(error)
         })
 
-        resolve()
       })
     },
     createCharge (src, params) {
@@ -55,11 +54,11 @@ export default function (name, app, options) {
 
         chargeService.create(charge).then(result => {
           console.log('Charge created', result)
+          resolve(result)
         }).catch(error => {
           console.log('Error creating charge', error)
+          reject(error)
         })
-
-        resolve()
       })
     },
     createSubscription (data, params) {
@@ -77,11 +76,11 @@ export default function (name, app, options) {
 
         subscriptionService.create(subscription).then(result => {
           console.log('Subscription created', result)
+          resolve(result)
         }).catch(error => {
           console.log('Error creating subscription', error)
+          reject(error)
         })
-
-        resolve()
       })
     },
     updateSubscription (id, params) {
@@ -90,27 +89,27 @@ export default function (name, app, options) {
 
         subscriptionService.update(id, params).then(result => {
           console.log('Subscription updated', result)
+          resolve(result)
         }).catch(error => {
           console.log('Error updating subscription', error)
+          reject(error)
         })
-
-        resolve()
       })
     },
     createInvoiceItems (params) {
       return new Promise((resolve, reject) => {
         let invoiceService = app.service('stripe/invoice-items')
 
-        invoiceService.create(params,
-          function (err, confirmation) {
-            console.log(err)
-          }
-        )
+        invoiceService.create(params)
+        .then(result => {
+          console.log('Invoice item created', result)
+          resolve(result)
+        })
         .catch(error => {
-          console.log('Error creating invoice', error)
+          console.log('Error creating invoice item', error)
+          reject(error)
         })
 
-        resolve()
       })
     },
     setup (app) {
