@@ -41,7 +41,7 @@ module.exports = {
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
     bucket: process.env.S3_BUCKET
   },
-  stripe: {
+  billing: {
     secretKey: process.env.STRIPE_SECRET_KEY
   }
 }

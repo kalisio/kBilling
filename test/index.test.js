@@ -5,7 +5,7 @@ import billing from '../src'
 
 describe('kBilling', () => {
   let app, server, port,
-    userService, userObject
+    userService, userObject, billingService
 
   before(() => {
     chailint(chai, util)
@@ -33,6 +33,9 @@ describe('kBilling', () => {
     app.configure(core)
     userService = app.getService('users')
     expect(userService).toExist()
+    app.configure(billing)
+    billingService = app.getService('billing')
+    expect(billingService).toExist()
     // Now app is configured launch the server
     server = app.listen(port)
     server.once('listening', _ => done())

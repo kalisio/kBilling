@@ -1,7 +1,5 @@
 import makeDebug from 'debug'
-import _ from 'lodash'
-import core, { kalisio, permissions } from 'kCore'
-import billing from 'feathers-stripe'
+import { Customer, Charge, Subscription, InvoiceItem } from 'feathers-stripe'
 
 const debug = makeDebug('kalisio:kBilling:billing:service')
 
@@ -23,7 +21,6 @@ export default function (name, app, options) {
           console.log('Error creating customer', error)
           reject(error)
         })
-
       })
     },
     removeCustomer (id, params) {
@@ -38,7 +35,6 @@ export default function (name, app, options) {
           console.log('Error removing customer', error)
           reject(error)
         })
-
       })
     },
     createCharge (src, params) {
@@ -109,15 +105,13 @@ export default function (name, app, options) {
           console.log('Error creating invoice item', error)
           reject(error)
         })
-
       })
     },
     setup (app) {
-      app.configure(core)
-      app.use('/billing/customer', billing.customer({ secretKey: app.get('billing').secretKey }))
-      app.use('/billing/charges', billing.charge({ secretKey: app.get('billing').secretKey }))
-      app.use('/billing/subscription', billing.subscription({ secretKey: app.get('billing').secretKey }))
-      app.use('/billing/invoice-items', billing.invoiceItem({ secretKey: app.get('billing').secretKey }))
+      app.use('/billing/customer', new Customer({ secretKey: app.get('billing').secretKey }))
+      app.use('/billing/charges', new Charge({ secretKey: app.get('billing').secretKey }))
+      app.use('/billing/subscription', new Subscription({ secretKey: app.get('billing').secretKey }))
+      app.use('/billing/invoice-items', new InvoiceItem({ secretKey: app.get('billing').secretKey }))
     },
     // Used to perform service actions such as create a billing customer, subscription, charge etc.
     create (data, params) {

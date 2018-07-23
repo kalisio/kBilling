@@ -5,7 +5,7 @@ import billing, { billingHooks } from '../src'
 
 describe('kBilling:billing', () => {
   let app, server, port,
-    billingService, userService
+    billingService, customerObject, subscriptionObject
 
   before(() => {
     chailint(chai, util)
@@ -18,19 +18,19 @@ describe('kBilling:billing', () => {
 
     app = kalisio()
     port = app.get('port')
-
+    // Register authorisation hook
     app.hooks({
       before: { all: [hooks.authorise] }
     })
-    // Register authorisation hook
     return app.db.connect()
   })
 
   it('is CommonJS compatible', () => {
-    expect(typeof core).to.equal('function')
+    expect(typeof billing).to.equal('function')
   })
 
-  it('registers the billing', (done) => {
+  it('registers the billing service', (done) => {
+    app.configure(core)
     app.configure(billing)
 
     billingService = app.getService('billing')
@@ -40,28 +40,16 @@ describe('kBilling:billing', () => {
     server.once('listening', _ => done())
   })
 
-  it('create customer', () => {
+  it('create a customer', () => {
     return billingService.create({
       action: 'customer',
-      email: 'publisher@kalisio.xyz',
-      name: 'publisher-user',
+      email: 'customer@kalisio.xyz',
+      name: 'customer',
       src: 'tok_visa'
     })
-    .catch(error => {
-      expect(error).toExist()
-      console.log(error)
-      done()
-    });
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('remove customer', () => {
-    return billingService.remove({action: 'customer', id: 'cus_DG7BdGMLB4F79E'})
-    .catch(error => {
-      expect(error).toExist()
-      console.log(error)
-      done()
+    .then(customer => {
+      customerObject = customer
+      expect(customerObject).toExist()
     })
   })
   // Let enough time to process
@@ -71,44 +59,48 @@ describe('kBilling:billing', () => {
     app.hooks({
       before: { all: [billingHooks.validateCharge] }
     })
-    return billingService.create({action: 'charge', src: 'tok_visa'})
-    .catch(error => {
-      expect(error).toExist()
-      console.log(error)
-      done()
+    return billingService.create({ action: 'charge', src: 'tok_visa' })
+    .then(charge => {
+      expect(charge).toExist()
     })
   })
   // Let enough time to process
   .timeout(5000)
 
   it('create subscription', () => {
-    return billingService.create({action: 'subscription', idCustomer: 'cus_DG84janbD4WQpc', plan: 'test'})
-    .catch(error => {
-      expect(error).toExist()
-      console.log(error)
-      done()
+    return billingService.create({ action: 'subscription', idCustomer: customerObject.id, plan: 'plan_DHd5HGwsl31NoC' })
+    .then(subscription => {
+      subscriptionObject = subscription
+      expect(subscriptionObject).toExist()
     })
   })
   // Let enough time to process
   .timeout(5000)
 
   it('update subscription', () => {
-    return billingService.update({action: 'subscription', id: 'sub_DG87EwNdOtSZaK', params: { tax_percent: 10 }}, {})
-    .catch(error => {
-      expect(error).toExist()
-      console.log(error)
-      done()
+    return billingService.update({ action: 'subscription', id: subscriptionObject.id, params: { tax_percent: 10 } }, {})
+    .then(subscription => {
+      subscriptionObject = subscription
+      expect(subscriptionObject).toExist()
     })
   })
   // Let enough time to process
   .timeout(5000)
 
   it('create invoice items', () => {
-    return billingService.create({action: 'invoiceItems', params: {customer: 'cus_DG84janbD4WQpc', amount: 2500, currency: 'usd', description: 'One-time setup fee'}})
-    .catch(error => {
-      expect(error).toExist()
-      console.log(error)
-      done()
+    return billingService.create({ action: 'invoiceItems', params: { customer: customerObject.id, amount: 2500, currency: 'usd', description: 'One-time setup fee' } })
+    .then(invoice => {
+      expect(invoice).toExist()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('remove customer', () => {
+    return billingService.remove({ action: 'customer', id: customerObject.id })
+    .then(customer => {
+      customerObject = customer
+      expect(customerObject).toExist()
     })
   })
   // Let enough time to process
