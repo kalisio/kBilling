@@ -4,5 +4,5 @@ const servicesPath = path.join(__dirname, '..', 'services')
 
 module.exports = async function () {
   const app = this
-  app.createService('stripeBilling', { servicesPath })
+  app.createService('billing', { servicesPath })
 }

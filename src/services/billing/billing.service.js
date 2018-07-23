@@ -1,15 +1,15 @@
 import makeDebug from 'debug'
 import _ from 'lodash'
 import core, { kalisio, permissions } from 'kCore'
-import stripe from 'feathers-stripe'
+import billing from 'feathers-stripe'
 
-const debug = makeDebug('kalisio:kBilling:stripe:service')
+const debug = makeDebug('kalisio:kBilling:billing:service')
 
 export default function (name, app, options) {
   return {
     createCustomer (data, params) {
       return new Promise((resolve, reject) => {
-        let customerService = app.service('stripe/customer')
+        let customerService = app.service('billing/customer')
 
         let customer = {
           email: data.email,
@@ -28,7 +28,7 @@ export default function (name, app, options) {
     },
     removeCustomer (id, params) {
       return new Promise((resolve, reject) => {
-        let customerService = app.service('stripe/customer')
+        let customerService = app.service('billing/customer')
 
         customerService.remove(id)
         .then(result => {
@@ -43,7 +43,7 @@ export default function (name, app, options) {
     },
     createCharge (src, params) {
       return new Promise((resolve, reject) => {
-        let chargeService = app.service('stripe/charges')
+        let chargeService = app.service('billing/charges')
 
         let charge = {
           amount: 400,
@@ -63,7 +63,7 @@ export default function (name, app, options) {
     },
     createSubscription (data, params) {
       return new Promise((resolve, reject) => {
-        let subscriptionService = app.service('stripe/subscription')
+        let subscriptionService = app.service('billing/subscription')
 
         let subscription = {
           customer: data.idCustomer,
@@ -85,7 +85,7 @@ export default function (name, app, options) {
     },
     updateSubscription (id, params) {
       return new Promise((resolve, reject) => {
-        let subscriptionService = app.service('stripe/subscription')
+        let subscriptionService = app.service('billing/subscription')
 
         subscriptionService.update(id, params).then(result => {
           console.log('Subscription updated', result)
@@ -98,7 +98,7 @@ export default function (name, app, options) {
     },
     createInvoiceItems (params) {
       return new Promise((resolve, reject) => {
-        let invoiceService = app.service('stripe/invoice-items')
+        let invoiceService = app.service('billing/invoice-items')
 
         invoiceService.create(params)
         .then(result => {
@@ -114,14 +114,14 @@ export default function (name, app, options) {
     },
     setup (app) {
       app.configure(core)
-      app.use('/stripe/customer', stripe.customer({ secretKey: app.get('stripe').secretKey }))
-      app.use('/stripe/charges', stripe.charge({ secretKey: app.get('stripe').secretKey }))
-      app.use('/stripe/subscription', stripe.subscription({ secretKey: app.get('stripe').secretKey }))
-      app.use('/stripe/invoice-items', stripe.invoiceItem({ secretKey: app.get('stripe').secretKey }))
+      app.use('/billing/customer', billing.customer({ secretKey: app.get('billing').secretKey }))
+      app.use('/billing/charges', billing.charge({ secretKey: app.get('billing').secretKey }))
+      app.use('/billing/subscription', billing.subscription({ secretKey: app.get('billing').secretKey }))
+      app.use('/billing/invoice-items', billing.invoiceItem({ secretKey: app.get('billing').secretKey }))
     },
-    // Used to perform service actions such as create a stripe customer, subscription, charge etc.
+    // Used to perform service actions such as create a billing customer, subscription, charge etc.
     create (data, params) {
-      debug(`stripe service called for create action=${data.action}`)
+      debug(`billing service called for create action=${data.action}`)
 
       switch (data.action) {
         case 'customer':
@@ -134,18 +134,18 @@ export default function (name, app, options) {
           return this.createInvoiceItems(data.params)
       }
     },
-    // Used to perform service actions such as create a stripe subscription etc.
+    // Used to perform service actions such as create a billing subscription etc.
     update (data, params) {
-      debug(`stripe service called for update action=${data.action}`)
+      debug(`billing service called for update action=${data.action}`)
 
       switch (data.action) {
         case 'subscription':
           return this.updateSubscription(data.id, data.params)
       }
     },
-    // Used to perform service actions such as remove a stripe customer etc.
+    // Used to perform service actions such as remove a billing customer etc.
     remove (data, params) {
-      debug(`stripe service called for remove action=${data.action}`)
+      debug(`billing service called for remove action=${data.action}`)
 
       switch (data.action) {
         case 'customer':

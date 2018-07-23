@@ -3,9 +3,9 @@ import chailint from 'chai-lint'
 import core, { kalisio, hooks, permissions } from 'kCore'
 import billing, { billingHooks } from '../src'
 
-describe('kBilling:stripe', () => {
+describe('kBilling:billing', () => {
   let app, server, port,
-    stripeService, userService
+    billingService, userService
 
   before(() => {
     chailint(chai, util)
@@ -33,15 +33,15 @@ describe('kBilling:stripe', () => {
   it('registers the billing', (done) => {
     app.configure(billing)
 
-    stripeService = app.getService('stripeBilling')
-    expect(stripeService).toExist()
+    billingService = app.getService('billing')
+    expect(billingService).toExist()
     // Now app is configured launch the server
     server = app.listen(port)
     server.once('listening', _ => done())
   })
 
   it('create customer', () => {
-    return stripeService.create({
+    return billingService.create({
       action: 'customer',
       email: 'publisher@kalisio.xyz',
       name: 'publisher-user',
@@ -57,7 +57,7 @@ describe('kBilling:stripe', () => {
   .timeout(5000)
 
   it('remove customer', () => {
-    return stripeService.remove({action: 'customer', id: 'cus_DG7BdGMLB4F79E'})
+    return billingService.remove({action: 'customer', id: 'cus_DG7BdGMLB4F79E'})
     .catch(error => {
       expect(error).toExist()
       console.log(error)
@@ -71,7 +71,7 @@ describe('kBilling:stripe', () => {
     app.hooks({
       before: { all: [billingHooks.validateCharge] }
     })
-    return stripeService.create({action: 'charge', src: 'tok_visa'})
+    return billingService.create({action: 'charge', src: 'tok_visa'})
     .catch(error => {
       expect(error).toExist()
       console.log(error)
@@ -82,7 +82,7 @@ describe('kBilling:stripe', () => {
   .timeout(5000)
 
   it('create subscription', () => {
-    return stripeService.create({action: 'subscription', idCustomer: 'cus_DG84janbD4WQpc', plan: 'test'})
+    return billingService.create({action: 'subscription', idCustomer: 'cus_DG84janbD4WQpc', plan: 'test'})
     .catch(error => {
       expect(error).toExist()
       console.log(error)
@@ -93,7 +93,7 @@ describe('kBilling:stripe', () => {
   .timeout(5000)
 
   it('update subscription', () => {
-    return stripeService.update({action: 'subscription', id: 'sub_DG87EwNdOtSZaK', params: { tax_percent: 10 }}, {})
+    return billingService.update({action: 'subscription', id: 'sub_DG87EwNdOtSZaK', params: { tax_percent: 10 }}, {})
     .catch(error => {
       expect(error).toExist()
       console.log(error)
@@ -104,7 +104,7 @@ describe('kBilling:stripe', () => {
   .timeout(5000)
 
   it('create invoice items', () => {
-    return stripeService.create({action: 'invoiceItems', params: {customer: 'cus_DG84janbD4WQpc', amount: 2500, currency: 'usd', description: 'One-time setup fee'}})
+    return billingService.create({action: 'invoiceItems', params: {customer: 'cus_DG84janbD4WQpc', amount: 2500, currency: 'usd', description: 'One-time setup fee'}})
     .catch(error => {
       expect(error).toExist()
       console.log(error)
