@@ -5,7 +5,7 @@ import billing, { billingHooks } from '../src'
 
 describe('kBilling:billing', () => {
   let app, server, port,
-    billingService, customerObject, subscriptionObject
+    billingService, customerObject, subscriptionObject, invoiceItemObject
 
   before(() => {
     chailint(chai, util)
@@ -68,7 +68,7 @@ describe('kBilling:billing', () => {
   .timeout(5000)
 
   it('create subscription', () => {
-    return billingService.create({ action: 'subscription', idCustomer: customerObject.id, plan: 'plan_DHd5HGwsl31NoC' })
+    return billingService.create({ action: 'subscription', idCustomer: customerObject.id, plan: 'test' })
     .then(subscription => {
       subscriptionObject = subscription
       expect(subscriptionObject).toExist()
@@ -90,7 +90,28 @@ describe('kBilling:billing', () => {
   it('create invoice items', () => {
     return billingService.create({ action: 'invoiceItems', params: { customer: customerObject.id, amount: 2500, currency: 'usd', description: 'One-time setup fee' } })
     .then(invoice => {
-      expect(invoice).toExist()
+      invoiceItemObject = invoice
+      expect(invoiceItemObject).toExist()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('cancel subscription', () => {
+    return billingService.remove({ action: 'subscription', id: subscriptionObject.id })
+    .then(subscription => {
+      subscriptionObject = subscription
+      expect(subscriptionObject).toExist()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('remove invoice items', () => {
+    return billingService.remove({ action: 'invoiceItems', id: invoiceItemObject.id })
+    .then(invoice => {
+      invoiceItemObject = invoice
+      expect(invoiceItemObject).toExist()
     })
   })
   // Let enough time to process
@@ -105,4 +126,26 @@ describe('kBilling:billing', () => {
   })
   // Let enough time to process
   .timeout(5000)
+
+  
+
+  // Cleanup
+  // after(() => {
+  //   // if (server) server.close()
+  //   billingService.list({action: 'customer'})
+  //   .then(customer => {
+  //     customerObject = customer
+  //     expect(customerObject).toExist()
+  //     customerObject.data.map(customer=>{
+  //       // console.log(customer.id);
+  //       billingService.remove({ action: 'customer', id: customer.id })
+  //       .then(customer => {
+  //         console.log(customer.id);
+  //         customerObject = customer
+  //         expect(customerObject).toExist()
+  //       })
+  //     })
+  //   })
+
+  // })
 })

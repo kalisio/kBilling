@@ -15,10 +15,10 @@ export default function (name, app, options) {
         }
 
         customerService.create(customer).then(result => {
-          console.log('Customer created', result)
+          debug('Customer created', result)
           resolve(result)
         }).catch(error => {
-          console.log('Error creating customer', error)
+          debug('Error creating customer', error)
           reject(error)
         })
       })
@@ -29,10 +29,10 @@ export default function (name, app, options) {
 
         customerService.remove(id)
         .then(result => {
-          console.log('Customer removed', result)
+          debug('Customer removed', result)
           resolve(result)
         }).catch(error => {
-          console.log('Error removing customer', error)
+          debug('Error removing customer', error)
           reject(error)
         })
       })
@@ -49,10 +49,10 @@ export default function (name, app, options) {
         }
 
         chargeService.create(charge).then(result => {
-          console.log('Charge created', result)
+          debug('Charge created', result)
           resolve(result)
         }).catch(error => {
-          console.log('Error creating charge', error)
+          debug('Error creating charge', error)
           reject(error)
         })
       })
@@ -71,10 +71,10 @@ export default function (name, app, options) {
         }
 
         subscriptionService.create(subscription).then(result => {
-          console.log('Subscription created', result)
+          debug('Subscription created', result)
           resolve(result)
         }).catch(error => {
-          console.log('Error creating subscription', error)
+          debug('Error creating subscription', error)
           reject(error)
         })
       })
@@ -84,10 +84,10 @@ export default function (name, app, options) {
         let subscriptionService = app.service('billing/subscription')
 
         subscriptionService.update(id, params).then(result => {
-          console.log('Subscription updated', result)
+          debug('Subscription updated', result)
           resolve(result)
         }).catch(error => {
-          console.log('Error updating subscription', error)
+          debug('Error updating subscription', error)
           reject(error)
         })
       })
@@ -98,13 +98,54 @@ export default function (name, app, options) {
 
         invoiceService.create(params)
         .then(result => {
-          console.log('Invoice item created', result)
+          debug('Invoice item created', result)
           resolve(result)
         })
         .catch(error => {
-          console.log('Error creating invoice item', error)
+          debug('Error creating invoice item', error)
           reject(error)
         })
+      })
+    },
+    cancelSubscription (id, params) {
+      return new Promise((resolve, reject) => {
+        let subscriptionService = app.service('billing/subscription')
+
+        subscriptionService.remove(id, params).then(result => {
+          debug('Subscription canceled', result)
+          resolve(result)
+        }).catch(error => {
+          debug('Error canceling subscription', error)
+          reject(error)
+        })
+      })
+    },
+    removeInvoiceItem (id, params) {
+      return new Promise((resolve, reject) => {
+        let invoiceService = app.service('billing/invoice-items')
+
+        invoiceService.remove(id)
+        .then(result => {
+          debug('Invoice item removed', result)
+          resolve(result)
+        })
+        .catch(error => {
+          debug('Error removing invoice item', error)
+          reject(error)
+        })
+      })
+    },
+    listCustomer (data, params) {
+      return new Promise((resolve, reject) => {
+        let customerService = app.service('billing/customer')
+
+        customerService.find().then(result => {
+          resolve(result)
+        }).catch(error => {
+          debug('Error customer list', error)
+          reject(error)
+        })
+
       })
     },
     setup (app) {
@@ -144,6 +185,19 @@ export default function (name, app, options) {
       switch (data.action) {
         case 'customer':
           return this.removeCustomer(data.id, params)
+        case 'subscription':
+          return this.cancelSubscription(data.id, params)
+        case 'invoiceItems':
+          return this.removeInvoiceItem(data.id, params)
+      }
+    },
+    // Used to perform service actions such as get list of billing customers etc.
+    list (data, params) {
+      debug(`billing service called for remove action=${data.action}`)
+
+      switch (data.action) {
+        case 'customer':
+          return this.listCustomer(data, params)
       }
     }
   }
