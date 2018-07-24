@@ -1,3 +1,11 @@
 {
-  
+  "KPaymentCardEditor": {
+    "TITLE": "Saisissez vos informations de carte de paiement",
+    "CLOSE_ACTION": "Fermer",
+    "UPDATE_BUTTON": "mettre à jour"
+  },
+  "KPaymentField": {
+    "INVOICE_METHOD_LABEL": "Par facturation",
+    "CARD_METHOD_LABEL": "Par carte de crédit"
+  }
 }
