@@ -1,3 +1,11 @@
 {
-  
+  "KPaymentCardEditor": {
+    "TITLE": "Enter your payment card details",
+    "CLOSE_ACTION": "Close",
+    "UPDATE_BUTTON": "Update"
+  },
+  "KPaymentField": {
+    "INVOICE_METHOD_LABEL": "By invoices",
+    "CARD_METHOD_LABEL": "By credit card"
+  }
 }
