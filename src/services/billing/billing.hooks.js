@@ -1,5 +1,4 @@
 import { disallow } from 'feathers-hooks-common'
-// import { validateCharge } from '../../hooks'
 
 module.exports = {
   before: {

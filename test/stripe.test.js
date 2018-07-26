@@ -5,7 +5,7 @@ import billing, { billingHooks } from '../src'
 
 describe('kBilling:billing', () => {
   let app, server, port,
-    billingService, customerObject, subscriptionObject, invoiceItemObject
+    billingService, customerObject, subscriptionObject, invoiceObject, invoiceItemObject, cardObject
 
   before(() => {
     chailint(chai, util)
@@ -35,6 +35,10 @@ describe('kBilling:billing', () => {
 
     billingService = app.getService('billing')
     expect(billingService).toExist()
+
+    app.hooks({
+      before: { all: [billingHooks.validateCharge] }
+    })
     // Now app is configured launch the server
     server = app.listen(port)
     server.once('listening', _ => done())
@@ -97,6 +101,17 @@ describe('kBilling:billing', () => {
   // Let enough time to process
   .timeout(5000)
 
+  it('create invoice', () => {
+    return billingService.create({ action: 'invoice', params: { customer: customerObject.id} })
+    .then(invoice => {
+      invoiceObject = invoice
+      expect(invoiceObject).toExist()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+
   it('cancel subscription', () => {
     return billingService.remove({ action: 'subscription', id: subscriptionObject.id })
     .then(subscription => {
@@ -117,6 +132,20 @@ describe('kBilling:billing', () => {
   // Let enough time to process
   .timeout(5000)
 
+  it('create a card', () => {
+    return billingService.create({
+      action: 'card',
+      id: customerObject.id,
+      params : {source: 'tok_visa'}
+    })
+    .then(card => {
+      cardObject = card
+      expect(customerObject).toExist()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
   it('remove customer', () => {
     return billingService.remove({ action: 'customer', id: customerObject.id })
     .then(customer => {
@@ -127,25 +156,64 @@ describe('kBilling:billing', () => {
   // Let enough time to process
   .timeout(5000)
 
+  it('create a payment method', () => {
+    return billingService.create({
+      action: 'paymentMethod',
+      organisationID: 'test organisation',
+      payment : {
+        customerEmail: 'customer@kalisio.xyz',
+        customerDescription: 'customer for',
+        // token: 'tok_visa'
+      }
+    })
+    .then(paymentMethod => {
+      if (paymentMethod.object == 'customer') {
+        customerObject = paymentMethod
+      } else if (paymentMethod.object == 'card') {
+        cardObject = paymentMethod
+        customerObject = {id:paymentMethod.customer}
+      }
+
+      expect(customerObject).toExist()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('update a payment method', () => {
+    return billingService.update({
+      action: 'paymentMethod',
+      customerID: customerObject.id,
+      payment : {
+        customerEmail: 'customer@kalisio.xyz',
+        customerDescription: 'customer for',
+        token: 'tok_mastercard'
+      }
+    }, {})
+    .then(card => {
+      cardObject = card
+      expect(cardObject).toExist()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('remove a payment method', () => {
+    return billingService.remove({
+      action: 'paymentMethod',
+      id: customerObject.id,
+    }, {})
+    .then(customer => {
+      customerObject = customer
+      expect(customerObject).toExist()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
   
 
-  // Cleanup
-  // after(() => {
-  //   // if (server) server.close()
-  //   billingService.list({action: 'customer'})
-  //   .then(customer => {
-  //     customerObject = customer
-  //     expect(customerObject).toExist()
-  //     customerObject.data.map(customer=>{
-  //       // console.log(customer.id);
-  //       billingService.remove({ action: 'customer', id: customer.id })
-  //       .then(customer => {
-  //         console.log(customer.id);
-  //         customerObject = customer
-  //         expect(customerObject).toExist()
-  //       })
-  //     })
-  //   })
-
-  // })
+  //Cleanup
+  after(() => {
+    if (server) server.close()
+  })
 })
