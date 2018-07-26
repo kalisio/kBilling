@@ -1,6 +1,9 @@
 {
-  "KPaymentCardEditor": {
-    "TITLE": "Enter your payment card details",
+  "KPaymentEditor": {
+    "TITLE": "Choose your payment method",
+    "CUSTOMER_EMAIL_FIELD_HELPER": "Enter the invoice email address",
+    "CUSTOMER_DESCRIPTION_FIELD_HELPER": "Enter a mention to add to your invoice",
+    "CARD_TOGGLE_LABEL": "Pay with your credit card",
     "CLOSE_ACTION": "Close",
     "UPDATE_BUTTON": "Update"
   },

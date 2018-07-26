@@ -1,10 +1,10 @@
 import makeDebug from 'debug'
-import stripe from 'feathers-stripe';
 import { Customer, Card, Charge, Subscription, Invoice, InvoiceItem } from 'feathers-stripe'
 
 const debug = makeDebug('kalisio:kBilling:billing:service')
 
 export default function (name, app, options) {
+  const config = app.get('billing')
   return {
     createCustomer (data, params) {
       return new Promise((resolve, reject) => {
@@ -162,27 +162,25 @@ export default function (name, app, options) {
           debug('Error customer list', error)
           reject(error)
         })
-
       })
     },
     listCard (id) {
       return new Promise((resolve, reject) => {
         let cardService = app.service('billing/card')
 
-        cardService.find({customer:id}).then(result => {
+        cardService.find({customer: id}).then(result => {
           resolve(result)
         }).catch(error => {
           debug('Error card list', error)
           reject(error)
         })
-
       })
     },
     createPaymentMethod (data, params) {
       return new Promise((resolve, reject) => {
         let _data = {
           description: data.payment.customerDescription + ' ' + data.organisationID,
-          email: data.payment.customerContact,
+          email: data.payment.customerContact
 
         }
 
@@ -190,7 +188,7 @@ export default function (name, app, options) {
         .then(customer => {
           debug('Customer created', customer)
           if (data.payment.token) {
-            return this.createCard(customer.id, { source: data.payment.token });
+            return this.createCard(customer.id, { source: data.payment.token })
           } else {
             resolve(customer)
           }
@@ -203,25 +201,23 @@ export default function (name, app, options) {
           debug('Error creating payment method', error)
           reject(error)
         })
-        
       })
     },
     updatePaymentMethod (data, params) {
       return new Promise((resolve, reject) => {
-
         this.listCard(data.customerID)
         .then(result => {
           debug('Card list', result)
           let cardPromises = []
-          result.data.forEach(card=>{
+          result.data.forEach(card => {
             cardPromises.push(this.removeCard(card.id, { customer: data.customerID }))
-          });
+          })
 
-          return Promise.all(cardPromises);
+          return Promise.all(cardPromises)
         })
-        .then(results=>{
+        .then(results => {
           if (data.payment.token) {
-            return this.createCard(data.customerID, { source: data.payment.token });
+            return this.createCard(data.customerID, { source: data.payment.token })
           } else {
             resolve(results)
           }
@@ -234,12 +230,10 @@ export default function (name, app, options) {
           debug('Error updating payment method', error)
           reject(error)
         })
-        
       })
     },
     removePaymentMethod (id, params) {
       return new Promise((resolve, reject) => {
-
         this.removeCustomer(id, params)
         .then(result => {
           debug('Customer removed', result)
@@ -248,7 +242,6 @@ export default function (name, app, options) {
           debug('Error removing customer', error)
           reject(error)
         })
-        
       })
     },
     createCard (customerID, params) {
@@ -262,7 +255,6 @@ export default function (name, app, options) {
           debug('Error creating card', error)
           reject(error)
         })
-
       })
     },
     removeCard (id, params) {
@@ -276,17 +268,15 @@ export default function (name, app, options) {
           debug('Error removing card', error)
           reject(error)
         })
-
       })
     },
-
     setup (app) {
-      app.use('/billing/customer', new Customer({ secretKey: app.get('billing').secretKey }))
-      app.use('/billing/card', new Card({ secretKey: app.get('billing').secretKey }))
-      app.use('/billing/charges', new Charge({ secretKey: app.get('billing').secretKey }))
-      app.use('/billing/subscription', new Subscription({ secretKey: app.get('billing').secretKey }))
-      app.use('/billing/invoice', new Invoice({ secretKey: app.get('billing').secretKey }))
-      app.use('/billing/invoice-items', new InvoiceItem({ secretKey: app.get('billing').secretKey }))
+      app.use('/stripe/customer', new Customer({ secretKey: config.secretKey }))
+      app.use('/stripe/card', new Card({ secretKey: config.secretKey }))
+      app.use('/stripe/charges', new Charge({ secretKey: config.secretKey }))
+      app.use('/stripe/subscription', new Subscription({ secretKey: config.secretKey }))
+      app.use('/stripe/invoice', new Invoice({ secretKey: config.secretKey }))
+      app.use('/stripe/invoice-items', new InvoiceItem({ secretKey: config.secretKey }))
     },
     // Used to perform service actions such as create a billing customer, subscription, charge etc.
     create (data, params) {
@@ -334,9 +324,9 @@ export default function (name, app, options) {
         case 'paymentMethod':
           return this.removePaymentMethod(data.id, params)
       }
-    },
+    }
     // Used to perform service actions such as get list of billing customers etc.
-    list (data, params) {
+    /* list (data, params) {
       debug(`billing service called for remove action=${data.action}`)
 
       switch (data.action) {
@@ -345,6 +335,6 @@ export default function (name, app, options) {
         case 'customer':
           return this.listCard(data)
       }
-    }
+    } */
   }
 }

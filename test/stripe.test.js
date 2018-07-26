@@ -102,7 +102,7 @@ describe('kBilling:billing', () => {
   .timeout(5000)
 
   it('create invoice', () => {
-    return billingService.create({ action: 'invoice', params: { customer: customerObject.id} })
+    return billingService.create({action: 'invoice'}, {customer: customerObject.id})
     .then(invoice => {
       invoiceObject = invoice
       expect(invoiceObject).toExist()
@@ -110,7 +110,6 @@ describe('kBilling:billing', () => {
   })
   // Let enough time to process
   .timeout(5000)
-
 
   it('cancel subscription', () => {
     return billingService.remove({ action: 'subscription', id: subscriptionObject.id })
@@ -136,7 +135,7 @@ describe('kBilling:billing', () => {
     return billingService.create({
       action: 'card',
       id: customerObject.id,
-      params : {source: 'tok_visa'}
+      params: {source: 'tok_visa'}
     })
     .then(card => {
       cardObject = card
@@ -160,18 +159,18 @@ describe('kBilling:billing', () => {
     return billingService.create({
       action: 'paymentMethod',
       organisationID: 'test organisation',
-      payment : {
+      payment: {
         customerEmail: 'customer@kalisio.xyz',
-        customerDescription: 'customer for',
+        customerDescription: 'customer for'
         // token: 'tok_visa'
       }
     })
     .then(paymentMethod => {
-      if (paymentMethod.object == 'customer') {
+      if (paymentMethod.object === 'customer') {
         customerObject = paymentMethod
-      } else if (paymentMethod.object == 'card') {
+      } else if (paymentMethod.object === 'card') {
         cardObject = paymentMethod
-        customerObject = {id:paymentMethod.customer}
+        customerObject = {id: paymentMethod.customer}
       }
 
       expect(customerObject).toExist()
@@ -184,7 +183,7 @@ describe('kBilling:billing', () => {
     return billingService.update({
       action: 'paymentMethod',
       customerID: customerObject.id,
-      payment : {
+      payment: {
         customerEmail: 'customer@kalisio.xyz',
         customerDescription: 'customer for',
         token: 'tok_mastercard'
@@ -201,7 +200,7 @@ describe('kBilling:billing', () => {
   it('remove a payment method', () => {
     return billingService.remove({
       action: 'paymentMethod',
-      id: customerObject.id,
+      id: customerObject.id
     }, {})
     .then(customer => {
       customerObject = customer
@@ -210,9 +209,8 @@ describe('kBilling:billing', () => {
   })
   // Let enough time to process
   .timeout(5000)
-  
 
-  //Cleanup
+  // Cleanup
   after(() => {
     if (server) server.close()
   })

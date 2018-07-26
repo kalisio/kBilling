@@ -6,7 +6,7 @@ export default function init () {
   const api = this
 
   // Declare the services
-  api.declareService('stripe')
+  api.declareService('billing')
 
   logger.debug('Initializing kalisio billing')
 }
