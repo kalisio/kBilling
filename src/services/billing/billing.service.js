@@ -1,4 +1,5 @@
 import makeDebug from 'debug'
+import _ from 'lodash'
 import { Customer, Card, Charge, Subscription, Invoice, InvoiceItem } from 'feathers-stripe'
 
 const debug = makeDebug('kalisio:kBilling:billing:service')
@@ -6,38 +7,22 @@ const debug = makeDebug('kalisio:kBilling:billing:service')
 export default function (name, app, options) {
   const config = app.get('billing')
   return {
-    createCustomer (data, params) {
-      return new Promise((resolve, reject) => {
-        let customerService = app.service('billing/customer')
+    async createCustomer (data, params) {
+      let customer = {
+        email: data.email,
+        description: data.description
+      }
 
-        let customer = {
-          email: data.email,
-          source: data.src,
-          description: data.description
-        }
-
-        customerService.create(customer).then(result => {
-          debug('Customer created', result)
-          resolve(result)
-        }).catch(error => {
-          debug('Error creating customer', error)
-          reject(error)
-        })
-      })
+      debug('Create customer: ' + customer)
+      const customerService = app.service('billing/customer')
+      let result = await customerService.create(customer)
+      console.log(result)
+      return result
     },
-    removeCustomer (id, params) {
-      return new Promise((resolve, reject) => {
-        let customerService = app.service('billing/customer')
-
-        customerService.remove(id)
-        .then(result => {
-          debug('Customer removed', result)
-          resolve(result)
-        }).catch(error => {
-          debug('Error removing customer', error)
-          reject(error)
-        })
-      })
+    async removeCustomer (id, params) {
+      debug('Remove customer: ' + id)
+      const customerService = app.service('billing/customer')
+      await customerService.remove(id)
     },
     createCharge (src, params) {
       return new Promise((resolve, reject) => {
@@ -270,22 +255,60 @@ export default function (name, app, options) {
         })
       })
     },
+    async createPayment (data, params) {
+      let customerData = {
+        email: data.customerEmail,
+        description: data.customerDescription
+      }
+      debug('Create customer: ' + customerData)
+      const customerService = app.service('billing/customer')
+      let customer = await customerService.create(customerData)
+      let card = {}
+      if (!_.isNil(data.cardToken)) {
+        debug('Create card: ' + data.cardToken)
+        const cardService = app.service('billing/card')
+        card = await cardService.create(data.cardToken)
+      }
+      return Object.assign(customer, card)
+    },
+    async updatePayment (id, data, params) {
+      let customerData = {
+        email: data.customerEmail,
+        description: data.customerDescription
+      }
+      debug('Create customer: ' + customerData)
+      const customerService = app.service('billing/customer')
+      let customer = await customerService.create(customerData)
+      let card = {}
+      if (!_.isNil(data.cardToken)) {
+        debug('Create card: ' + data.cardToken)
+        const cardService = app.service('billing/card')
+        card = await cardService.create(data.cardToken)
+      }
+      return Object.assign(customer, card)
+    },
+    async removePayment (id, params) {
+      debug('Remove customer: ' + id)
+      const customerService = app.service('billing/customer')
+      await customerService.remove(id)
+    },
     setup (app) {
-      app.use('/stripe/customer', new Customer({ secretKey: config.secretKey }))
-      app.use('/stripe/card', new Card({ secretKey: config.secretKey }))
-      app.use('/stripe/charges', new Charge({ secretKey: config.secretKey }))
-      app.use('/stripe/subscription', new Subscription({ secretKey: config.secretKey }))
-      app.use('/stripe/invoice', new Invoice({ secretKey: config.secretKey }))
-      app.use('/stripe/invoice-items', new InvoiceItem({ secretKey: config.secretKey }))
+      app.use('/billing/customer', new Customer({ secretKey: config.secretKey }))
+      app.use('/billing/card', new Card({ secretKey: config.secretKey }))
+      app.use('/billing/charges', new Charge({ secretKey: config.secretKey }))
+      app.use('/billing/subscription', new Subscription({ secretKey: config.secretKey }))
+      app.use('/billing/invoice', new Invoice({ secretKey: config.secretKey }))
+      app.use('/billing/invoice-items', new InvoiceItem({ secretKey: config.secretKey }))
     },
     // Used to perform service actions such as create a billing customer, subscription, charge etc.
-    create (data, params) {
+    async create (data, params) {
       debug(`billing service called for create action=${data.action}`)
 
       switch (data.action) {
-        case 'customer':
-          return this.createCustomer(data, params)
-        case 'charge':
+        case 'payment':
+          let payment = await this.createPayment(data, params)
+          return payment
+        /* case 'charge':
           return this.createCharge(data.src, params)
         case 'card':
           return this.createCard(data.id, data.params)
@@ -296,33 +319,34 @@ export default function (name, app, options) {
         case 'invoiceItems':
           return this.createInvoiceItems(data.params)
         case 'paymentMethod':
-          return this.createPaymentMethod(data, params)
+          return this.createPaymentMethod(data, params) */
       }
     },
     // Used to perform service actions such as update a billing subscription etc.
-    update (data, params) {
+    async update (id, data, params) {
       debug(`billing service called for update action=${data.action}`)
 
-      switch (data.action) {
+      /* switch (data.action) {
         case 'subscription':
           return this.updateSubscription(data.id, data.params)
         case 'paymentMethod':
           return this.updatePaymentMethod(data, params)
-      }
+      } */
     },
     // Used to perform service actions such as remove a billing customer etc.
-    remove (data, params) {
-      debug(`billing service called for remove action=${data.action}`)
+    async remove (id, params) {
+      const query = params.query
+      debug(`billing service called for remove action=${query.action}`)
 
-      switch (data.action) {
-        case 'customer':
-          return this.removeCustomer(data.id, params)
-        case 'subscription':
+      switch (query.action) {
+        case 'payment':
+          await this.removePayment(id, params)
+       /* case 'subscription':
           return this.cancelSubscription(data.id, params)
         case 'invoiceItems':
           return this.removeInvoiceItem(data.id, params)
         case 'paymentMethod':
-          return this.removePaymentMethod(data.id, params)
+          return this.removePaymentMethod(data.id, params) */
       }
     }
     // Used to perform service actions such as get list of billing customers etc.

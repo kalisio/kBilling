@@ -1,14 +1,10 @@
-import _ from 'lodash'
 import makeDebug from 'debug'
-import { Forbidden } from '@feathersjs/errors'
-import { hooks } from 'kCore'
-import { permissions } from 'kCore/common'
 
 const debug = makeDebug('kalisio:kBilling:billing:hooks')
 
 export function validateCharge (hook) {
   return hook
-	// console.log(hook);
+  // console.log(hook);
   // console.log('Validating charge code goes here')
 }
 
@@ -24,7 +20,7 @@ export function createCustomer (hook) {
   })
   .then(customer => {
     debug('Customer created for ' + hook.result.email)
-  	return hook
+    return hook
   })
 }
 
@@ -38,7 +34,7 @@ export function removeCustomer (hook) {
   })
   .then(customer => {
     debug('Customer removed')
-  	return hook
+    return hook
   })
 }
 
@@ -52,7 +48,7 @@ export function createCharge (hook) {
   })
   .then(charge => {
     debug('Charge created')
-  	return hook
+    return hook
   })
 }
 
@@ -67,7 +63,7 @@ export function createSubscription (hook) {
   }, {})
   .then(subscription => {
     debug('Subscription created')
-  	return hook
+    return hook
   })
 }
 
@@ -82,7 +78,7 @@ export function updateSubscription (hook) {
   }, {})
   .then(subscription => {
     debug('Subscription updated')
-  	return hook
+    return hook
   })
 }
 
@@ -96,7 +92,7 @@ export function cancelSubscription (hook) {
   }, {})
   .then(subscription => {
     debug('Subscription canceled')
-  	return hook
+    return hook
   })
 }
 
@@ -110,7 +106,7 @@ export function createInvoiceItems (hook) {
   }, {})
   .then(customer => {
     debug('Invoice item created')
-  	return hook
+    return hook
   })
 }
 
@@ -124,7 +120,7 @@ export function createInvoice (hook) {
   }, {})
   .then(customer => {
     debug('Invoice created')
-  	return hook
+    return hook
   })
 }
 
@@ -138,7 +134,7 @@ export function removeInvoiceItems (hook) {
   }, {})
   .then(customer => {
     debug('Invoice item removed')
-  	return hook
+    return hook
   })
 }
 
@@ -153,7 +149,7 @@ export function createPaymentMethod (hook) {
   }, {})
   .then(customer => {
     debug('Payment method created')
-  	return hook
+    return hook
   })
 }
 
@@ -168,7 +164,7 @@ export function updatePaymentMethod (hook) {
   }, {})
   .then(customer => {
     debug('Payment method updated')
-  	return hook
+    return hook
   })
 }
 
@@ -182,6 +178,6 @@ export function removePaymentMethod (hook) {
   }, {})
   .then(customer => {
     debug('Payment method removed')
-  	return hook
+    return hook
   })
 }

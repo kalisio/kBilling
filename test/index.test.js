@@ -5,7 +5,7 @@ import billing from '../src'
 
 describe('kBilling', () => {
   let app, server, port,
-    userService, userObject, billingService
+    userService, userObject, billingService, paymentObject
 
   before(() => {
     chailint(chai, util)
@@ -49,6 +49,27 @@ describe('kBilling', () => {
     })
     .then(users => {
       expect(users.data.length > 0).beTrue()
+    })
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('create a payment', async () => {
+    paymentObject = await billingService.create({
+      action: 'payment',
+      customerEmail: 'customer@kalisio.xyz',
+      customerDescription: 'A customer'
+    })
+    expect(paymentObject.id).toExist()
+  })
+  // Let enough time to process
+  .timeout(5000)
+
+  it('removes the payment', async () => {
+    await billingService.remove(paymentObject.id, {
+      query: {
+        action: 'payment'
+      }
     })
   })
   // Let enough time to process
