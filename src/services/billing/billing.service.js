@@ -64,7 +64,7 @@ export default function (name, app, options) {
         let subscriptionService = app.service('billing/subscription')
 
         let subscription = {
-          customer: data.idCustomer,
+          customer: data.customerID,
           items: [
             {
               plan: data.plan

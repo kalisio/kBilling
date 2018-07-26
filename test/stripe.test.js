@@ -48,7 +48,7 @@ describe('kBilling:billing', () => {
     return billingService.create({
       action: 'customer',
       email: 'customer@kalisio.xyz',
-      name: 'customer',
+      description: 'customer',
       src: 'tok_visa'
     })
     .then(customer => {
@@ -72,7 +72,7 @@ describe('kBilling:billing', () => {
   .timeout(5000)
 
   it('create subscription', () => {
-    return billingService.create({ action: 'subscription', idCustomer: customerObject.id, plan: 'test' })
+    return billingService.create({ action: 'subscription', customerID: customerObject.id, plan: 'test' })
     .then(subscription => {
       subscriptionObject = subscription
       expect(subscriptionObject).toExist()
