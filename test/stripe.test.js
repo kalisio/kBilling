@@ -1,11 +1,11 @@
-/* import chai, { util, expect } from 'chai'
+import chai, { util, expect } from 'chai'
 import chailint from 'chai-lint'
 import core, { kalisio, hooks, permissions } from 'kCore'
-import billing, { billingHooks } from '../src'
+import billing from '../src'
 
-describe('kBilling:billing', () => {
+describe('kBilling', () => {
   let app, server, port,
-    billingService, customerObject, subscriptionObject, invoiceObject, invoiceItemObject, cardObject
+    billingService, customerObject, subscriptionObject
 
   before(() => {
     chailint(chai, util)
@@ -26,182 +26,91 @@ describe('kBilling:billing', () => {
   })
 
   it('is CommonJS compatible', () => {
-    expect(typeof billing).to.equal('function')
+    expect(typeof core).to.equal('function')
   })
 
-  it('registers the billing service', (done) => {
+  it('registers the services', (done) => {
     app.configure(core)
     app.configure(billing)
-
     billingService = app.getService('billing')
     expect(billingService).toExist()
-
-    app.hooks({
-      before: { all: [billingHooks.validateCharge] }
-    })
     // Now app is configured launch the server
     server = app.listen(port)
     server.once('listening', _ => done())
   })
 
-  it('create a customer', () => {
-    let customerObject = await billingService.create({
+  it('create a customer', async () => {
+    customerObject = await billingService.create({
       action: 'customer',
       email: 'customer@kalisio.xyz',
-      description: 'A customer',
+      description: 'A customer'
     })
     expect(customerObject.id).toExist()
   })
   // Let enough time to process
   .timeout(5000)
 
-  it('create charge', () => {
-    app.hooks({
-      before: { all: [billingHooks.validateCharge] }
+  it('update a customer with a visa card', async () => {
+    customerObject = await billingService.update(customerObject.id, {
+      action: 'customer',
+      email: 'purchaser@kalisio.xyz',
+      description: 'A visa purchaser',
+      token: 'tok_visa'
     })
-    return billingService.create({ action: 'charge', src: 'tok_visa' })
-    .then(charge => {
-      expect(charge).toExist()
-    })
+    expect(customerObject.id).toExist()
   })
   // Let enough time to process
   .timeout(5000)
 
-  it('create subscription', () => {
-    return billingService.create({ action: 'subscription', customerID: customerObject.id, plan: 'test' })
-    .then(subscription => {
-      subscriptionObject = subscription
-      expect(subscriptionObject).toExist()
+  it('update a customer with a mastercard', async () => {
+    customerObject = await billingService.update(customerObject.id, {
+      action: 'customer',
+      email: 'purchaser@kalisio.xyz',
+      description: 'A mastercard purchaser',
+      token: 'tok_mastercard'
     })
+    expect(customerObject.id).toExist()
   })
   // Let enough time to process
   .timeout(5000)
 
-  it('update subscription', () => {
-    return billingService.update({ action: 'subscription', id: subscriptionObject.id, params: { tax_percent: 10 } }, {})
-    .then(subscription => {
-      subscriptionObject = subscription
-      expect(subscriptionObject).toExist()
+  it('subscribe a customer to a plan', async () => {
+    subscriptionObject = await billingService.create({
+      action: 'subscription',
+      customer: customerObject.id,
+      plan: 'plan_DHd5RMLMSlpUmQ'
     })
+    expect(subscriptionObject.id).toExist()
   })
   // Let enough time to process
   .timeout(5000)
 
-  it('create invoice items', () => {
-    return billingService.create({ action: 'invoiceItems', params: { customer: customerObject.id, amount: 2500, currency: 'usd', description: 'One-time setup fee' } })
-    .then(invoice => {
-      invoiceItemObject = invoice
-      expect(invoiceItemObject).toExist()
-    })
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('create invoice', () => {
-    return billingService.create({action: 'invoice'}, {customer: customerObject.id})
-    .then(invoice => {
-      invoiceObject = invoice
-      expect(invoiceObject).toExist()
-    })
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('cancel subscription', () => {
-    return billingService.remove({ action: 'subscription', id: subscriptionObject.id })
-    .then(subscription => {
-      subscriptionObject = subscription
-      expect(subscriptionObject).toExist()
-    })
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('remove invoice items', () => {
-    return billingService.remove({ action: 'invoiceItems', id: invoiceItemObject.id })
-    .then(invoice => {
-      invoiceItemObject = invoice
-      expect(invoiceItemObject).toExist()
-    })
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('create a card', () => {
-    return billingService.create({
-      action: 'card',
-      id: customerObject.id,
-      params: {source: 'tok_visa'}
-    })
-    .then(card => {
-      cardObject = card
-      expect(customerObject).toExist()
-    })
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('remove customer', () => {
-    await
-    return billingService.remove({ action: 'customer', id: customerObject.id })
-    .then(customer => {
-      customerObject = customer
-      expect(customerObject).toExist()
-    })
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('create a payment method', () => {
-    return billingService.create({
-      action: 'paymentMethod',
-      organisationID: 'test organisation',
-      payment: {
-        customerEmail: 'customer@kalisio.xyz',
-        customerDescription: 'customer for'
-        // token: 'tok_visa'
+  it('unsubscribe a customer from the plan', async () => {
+    await billingService.remove(subscriptionObject.id, {
+      query: {
+        action: 'subscription'
       }
     })
-    .then(paymentMethod => {
-      if (paymentMethod.object === 'customer') {
-        customerObject = paymentMethod
-      } else if (paymentMethod.object === 'card') {
-        cardObject = paymentMethod
-        customerObject = {id: paymentMethod.customer}
-      }
-
-      expect(customerObject).toExist()
-    })
   })
   // Let enough time to process
   .timeout(5000)
 
-  it('update a payment method', () => {
-    return billingService.update({
-      action: 'paymentMethod',
-      customerID: customerObject.id,
-      payment: {
-        customerEmail: 'customer@kalisio.xyz',
-        customerDescription: 'customer for',
-        token: 'tok_mastercard'
-      }
-    }, {})
-    .then(card => {
-      cardObject = card
-      expect(cardObject).toExist()
+  it('subscribe a customer to a plan', async () => {
+    subscriptionObject = await billingService.create({
+      action: 'subscription',
+      customer: customerObject.id,
+      plan: 'plan_DHd5HGwsl31NoC'
     })
+    expect(subscriptionObject.id).toExist()
   })
   // Let enough time to process
   .timeout(5000)
 
-  it('remove a payment method', () => {
-    return billingService.remove({
-      action: 'paymentMethod',
-      id: customerObject.id
-    }, {})
-    .then(customer => {
-      customerObject = customer
-      expect(customerObject).toExist()
+  it('removes the customer', async () => {
+    await billingService.remove(customerObject.id, {
+      query: {
+        action: 'customer'
+      }
     })
   })
   // Let enough time to process
@@ -209,8 +118,5 @@ describe('kBilling:billing', () => {
 
   // Cleanup
   after(() => {
-    if (server) server.close()
   })
 })
-
-*/

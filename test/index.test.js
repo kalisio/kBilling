@@ -5,7 +5,7 @@ import billing from '../src'
 
 describe('kBilling', () => {
   let app, server, port,
-    userService, userObject, billingService, customerObject, subscriptionObject
+    userService, userObject, billingService
 
   before(() => {
     chailint(chai, util)
@@ -49,83 +49,6 @@ describe('kBilling', () => {
     })
     .then(users => {
       expect(users.data.length > 0).beTrue()
-    })
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('create a customer', async () => {
-    customerObject = await billingService.create({
-      action: 'customer',
-      email: 'customer@kalisio.xyz',
-      description: 'A customer'
-    })
-    expect(customerObject.id).toExist()
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('update a customer with a visa card', async () => {
-    customerObject = await billingService.update(customerObject.id, {
-      action: 'customer',
-      email: 'purchaser@kalisio.xyz',
-      description: 'A visa purchaser',
-      token: 'tok_visa'
-    })
-    expect(customerObject.id).toExist()
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('update a customer with a mastercard', async () => {
-    customerObject = await billingService.update(customerObject.id, {
-      action: 'customer',
-      email: 'purchaser@kalisio.xyz',
-      description: 'A mastercard purchaser',
-      token: 'tok_mastercard'
-    })
-    expect(customerObject.id).toExist()
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('subscribe a customer to a plan', async () => {
-    subscriptionObject = await billingService.create({
-      action: 'subscription',
-      customer: customerObject.id,
-      plan: 'plan_DHd5RMLMSlpUmQ'
-    })
-    expect(subscriptionObject.id).toExist()
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('unsubscribe a customer from the plan', async () => {
-    await billingService.remove(subscriptionObject.id, {
-      query: {
-        action: 'subscription'
-      }
-    })
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('subscribe a customer to a plan', async () => {
-    subscriptionObject = await billingService.create({
-      action: 'subscription',
-      customer: customerObject.id,
-      plan: 'plan_DHd5HGwsl31NoC'
-    })
-    expect(subscriptionObject.id).toExist()
-  })
-  // Let enough time to process
-  .timeout(5000)
-
-  it('removes the customer', async () => {
-    await billingService.remove(customerObject.id, {
-      query: {
-        action: 'customer'
-      }
     })
   })
   // Let enough time to process

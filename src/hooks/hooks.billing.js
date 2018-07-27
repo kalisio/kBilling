@@ -1,3 +1,4 @@
+/*
 import makeDebug from 'debug'
 
 const debug = makeDebug('kalisio:kBilling:billing:hooks')
@@ -181,3 +182,30 @@ export function removePaymentMethod (hook) {
     return hook
   })
 }
+
+export function createPayment (hook) {
+  let app = hook.app
+  let billingService = app.getService('billing')
+
+  return billingService.create({
+    action: 'payment',
+    customerEmail: hook.result.customerEmail,
+    customerDescription: hook.result.customerDescription
+  })
+
+  return hook
+}
+
+export function removePayment (hook) {
+  let app = hook.app
+  let billingService = app.getService('billing')
+
+  return billingService.remove(hook.result.id, {
+    query: {
+      action: 'payment'
+    }
+  })
+
+  return hook
+}
+*/
