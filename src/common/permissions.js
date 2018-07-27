@@ -1,4 +1,6 @@
-// Hook computing billing abilities for a given user
-export function defineBillingAbilities (subject, can, cannot) {
-
+export function defineUserAbilities (subject, can, cannot) {
+  can('service', 'billing')
+  can('create', 'billing')
+  can('update', 'billing')
+  can('remove', 'billing')
 }

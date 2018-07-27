@@ -14,7 +14,7 @@
               <div class="col-11 self-center">
                 <span>&nbsp;</span>
                 <q-icon name="credit_card" />
-                <span>&nbsp;XXX-XXXX-XXXX-{{payment.token.card.last4}}</span>
+                <span>&nbsp;XXXX-{{customer.card}}</span>
               </div>
               <div class="col-1">
                 <q-btn flat round color="grey-7" @click="onCardCleared">
@@ -47,7 +47,7 @@ import { Card, createToken } from 'vue-stripe-elements-plus'
 import { mixins as kCoreMixins } from 'kCore/client'
 
 export default {
-  name: 'k-payment-editor',
+  name: 'k-customer-editor',
   components: {
     QToggle,
     QCard,
@@ -83,11 +83,11 @@ export default {
     getSchema () {
       return {
         '$schema': 'http://json-schema.org/draft-06/schema#',
-        '$id': 'http://kalisio.xyz/schemas/edit-payment',
+        '$id': 'http://kalisio.xyz/schemas/edit-customer',
         'title': 'KPaymentEditor.TITLE',
         'type': 'object',
         'properties': {
-          'customerEmail': {
+          'email': {
             'type': 'string',
             'format': 'email',
             'field': {
@@ -95,15 +95,22 @@ export default {
               'helper': 'KPaymentEditor.CUSTOMER_EMAIL_FIELD_HELPER'
             }
           },
-          'customerDescription': {
+          'description': {
             'type': 'string',
             'field': {
               'component': 'form/KTextareaField',
               'helper': 'KPaymentEditor.CUSTOMER_DESCRIPTION_FIELD_HELPER'
             }
+          },
+          'business_vat_id': {
+            'type': 'string',
+            'field': {
+              'component': 'form/KTextField',
+              'helper': 'KPaymentEditor.CUSTOMER_VAT_FIELD_HELPER'
+            }
           }
         },
-        'required': ['customerEmail']
+        'required': ['email']
       }
     },
     getToolbar () {
@@ -116,23 +123,22 @@ export default {
         { name: 'update-button', label: this.$t('KPaymentEditor.UPDATE_BUTTON'), color: 'primary', handler: (event, done) => this.onUpdateClicked(event, done) }
       ]
     },
-    open (payment) {
+    open (customer) {
       // Initialize the editor
-      if (!_.isNil(payment)) this.payment = Object.assign(payment)
+      if (!_.isNil(customer)) this.customer = Object.assign(customer)
       else {
-        this.payment = {
-          customerID: undefined,
-          customerEmail: this.$store.get('user.description'),
-          customerDescription: this.$store.get('context.name')
+        this.customer = {
+          email: this.$store.get('user.description'),
+          description: this.$store.get('context.name')
         }
       }
-      this.hasCard = !!this.payment.token
-      this.hasToken = this.hasCard
+      this.hasToken = this.customer.token
+      this.hasCard = this.hasCard
 
       // Open the editor
       this.$refs.modal.open()
       // Fill the editor
-      this.$refs.form.fill(this.payment)
+      this.$refs.form.fill(this.customer)
     },
     close (onClose) {
       this.$refs.modal.close(onClose)
@@ -140,15 +146,14 @@ export default {
     onUpdateClicked (event, done) {
       let result = this.$refs.form.validate()
       if (result.isValid) {
-        this.payment = Object.assign(this.payment, result.values)
+        this.customer = Object.assign(this.customer, result.values)
 
         const billingService = this.$api.getService('billing')
-        billingService.create({
-          action: 'payment',
-          payment: this.payment,
-          billingObject: this.billingObject,
-          serviceObject: this.serviceObject
-        })
+        billingService.create(Object.assign(this.customer, {
+          action: 'customer',
+          billingObjectId: this.billingObjectId,
+          billingService: this.billingService
+        }))
         this.close(done())
       } else {
         done()
@@ -159,7 +164,8 @@ export default {
         this.isUpdatingCard = true
         createToken(card).then(data => {
           if (!_.isNil(data.token)) {
-            this.payment.token = data.token
+            this.customer.token = data.token.id
+            this.customer.card = data.token.card.last4
             this.hasToken = true
           }
           this.isUpdatingCard = false
@@ -167,7 +173,8 @@ export default {
       }
     },
     onCardCleared () {
-      _.unset(this.payment.token)
+      _.unset(this.customer.token)
+      _.unset(this.customer.card)
       this.hasToken = false
     }
   },
