@@ -106,7 +106,7 @@ export default {
             'type': 'string',
             'field': {
               'component': 'form/KTextField',
-              'helper': 'KPaymentEditor.CUSTOMER_VAT_FIELD_HELPER'
+              'helper': 'KPaymentEditor.CUSTOMER_VAT_NUMBER_FIELD_HELPER'
             }
           }
         },

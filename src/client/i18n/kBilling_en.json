@@ -3,6 +3,7 @@
     "TITLE": "Choose your payment method",
     "CUSTOMER_EMAIL_FIELD_HELPER": "Enter the invoice email address",
     "CUSTOMER_DESCRIPTION_FIELD_HELPER": "Enter a mention to add to your invoice",
+    "CUSTOMER_VAT_NUMBER_FIELD_HELPER": "Enter your VAT number",
     "CARD_TOGGLE_LABEL": "Pay with your credit card",
     "CLOSE_ACTION": "Close",
     "UPDATE_BUTTON": "Update"
