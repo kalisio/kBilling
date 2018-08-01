@@ -87,6 +87,21 @@ describe('kBilling', () => {
   // Let enough time to process
   .timeout(7500)
 
+  it('remove the card from a customer', async () => {
+    customerObject = await billingService.update(customerObject.id, {
+      action: 'customer',
+      email: 'no-card@kalisio.xyz',
+      description: 'A no card purchaser',
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    userObject = await userService.get(userObject._id)
+    expect(userObject.billing.customer.email).to.equal('no-card@kalisio.xyz')
+    assert.isUndefined(userObject.billing.customer.card)
+  })
+  // Let enough time to process
+  .timeout(7500)
+
   it('update a customer with a mastercard', async () => {
     customerObject = await billingService.update(customerObject.id, {
       action: 'customer',
@@ -98,6 +113,23 @@ describe('kBilling', () => {
     })
     userObject = await userService.get(userObject._id)
     expect(userObject.billing.customer.email).to.equal('mastercard@kalisio.xyz')
+    expect(customerObject.card.id === userObject.billing.customer.card.id)
+    expect(customerObject.card.last4 === userObject.billing.customer.card.last4)
+  })
+  // Let enough time to process
+  .timeout(7500)
+
+  it('update a customer with an american express', async () => {
+    customerObject = await billingService.update(customerObject.id, {
+      action: 'customer',
+      email: 'amex@kalisio.xyz',
+      description: 'A anmerican express purchaser',
+      card: { id: 'tok_amex' },
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    userObject = await userService.get(userObject._id)
+    expect(userObject.billing.customer.email).to.equal('amex@kalisio.xyz')
     expect(customerObject.card.id === userObject.billing.customer.card.id)
     expect(customerObject.card.last4 === userObject.billing.customer.card.last4)
   })
