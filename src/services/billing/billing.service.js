@@ -6,8 +6,7 @@ import { BadRequest } from '@feathersjs/errors'
 const debug = makeDebug('kalisio:kBilling:billing:service')
 
 const customerInputFields = ['email', 'description', 'business_vat_id']
-const customerOuputFields = ['id', 'email', 'description', 'business_vat_id', 'card.token', 'card.last4']
-const subscriptionOutputFields = ['id', 'plan.id', 'plan.nickname']
+const customerOuputFields = ['id', 'email', 'description', 'business_vat_id']
 
 export default function (name, app, options) {
   const config = app.get('billing')
@@ -16,7 +15,7 @@ export default function (name, app, options) {
       debug('Create card ' + token + ' for customer ' + customerId)
       const cardService = app.service('billing/card')
       let card = await cardService.create({source: token}, {customer: customerId})
-      return { id: card.id, last4: card.last4 }
+      return { id: card.id, brand: card.brand, last4: card.last4 }
     },
     async removeCard (customerId) {
       debug('Remove card from customer ' + customerId)
@@ -33,8 +32,8 @@ export default function (name, app, options) {
       const customerService = app.service('billing/customer')
       let stripeCustomer = await customerService.create(customerData)
       let customerObject = Object.assign(_.pick(stripeCustomer, customerOuputFields))
-      if (!_.isNil(_.get(data, 'card.id', null))) {
-        let card = await this.createCard(stripeCustomer.id, data.card.id)
+      if (!_.isNil(_.get(data, 'token', null))) {
+        let card = await this.createCard(stripeCustomer.id, data.token)
         customerObject = Object.assign(customerObject, {card: card})
       }
       const billingObjectService = app.getService(data.billingObjectService)
@@ -50,15 +49,15 @@ export default function (name, app, options) {
         await this.removeCard(customerId)
       }
       let customerObject = Object.assign(_.pick(stripeCustomer, customerOuputFields))
-      if (!_.isNil(_.get(data, 'card.id', null))) {
-        let card = await this.createCard(customerId, data.card.id)
+      if (!_.isNil(_.get(data, 'token', null))) {
+        let card = await this.createCard(customerId, data.token)
         customerObject = Object.assign(customerObject, {card: card})
       }
       const billingObjectService = app.getService(data.billingObjectService)
       await billingObjectService.patch(data.billingObjectId, { 'billing.customer': customerObject })
       return customerObject
     },
-    async removeCustomer (customerId, query, patch = true) {
+    async removeCustomer (customerId, query, patch) {
       debug('Remove customer: ' + customerId)
       const customerService = app.service('billing/customer')
       await customerService.remove(customerId)
@@ -69,10 +68,13 @@ export default function (name, app, options) {
     },
     async createSubscription (data) {
       // Map the input parameters to the parameters requested by the underlying feathers service
-      let subscriptionData = _.mapKeys(_.pick(data, ['customerId', 'planId']), (value, key) => {
+      let subscriptionData = _.mapKeys(_.pick(data, ['customerId', 'planId', 'billing']), (value, key) => {
         if (key === 'customerId') return 'customer'
         if (key === 'planId') return 'plan'
+        if (key === 'billing') return 'billing'
       })
+      let billingMethod = _.get(subscriptionData, 'billing', 'charge_automatically')
+      if (billingMethod === 'send_invoice') subscriptionData['days_until_due'] = config.daysUntilInvoiceDue
       // Check the required parameters
       if (_.isNil(subscriptionData.customer)) throw new BadRequest(`createSubscription: missing 'customer' parameter`)
       if (_.isNil(subscriptionData.plan)) throw new BadRequest(`createSubscription: missing 'plan' parameter`)
@@ -80,12 +82,12 @@ export default function (name, app, options) {
       debug('Create subscription for ' + data.customer + ' for plan ' + subscriptionData.plan)
       let subscriptionService = app.service('billing/subscription')
       let stripeSubscription = await subscriptionService.create(subscriptionData)
-      let subscriptionObject = _.pick(stripeSubscription, subscriptionOutputFields)
+      let subscriptionObject = _.pick(stripeSubscription, ['id', 'plan.id', 'plan.nickname'])
       const billingObjectService = app.getService(data.billingObjectService)
       await billingObjectService.patch(data.billingObjectId, { 'billing.subscription': subscriptionObject })
       return subscriptionObject
     },
-    async removeSubscription (subscriptionId, query, patch = true) {
+    async removeSubscription (subscriptionId, query, patch) {
       debug('Remove subscripton: ' + subscriptionId + ' for customer ' + query.customerId)
       const subscriptionService = app.service('billing/subscription')
       await subscriptionService.remove(subscriptionId, {customer: query.customerId})
@@ -129,10 +131,10 @@ export default function (name, app, options) {
       if (_.isNil(query.billingObjectId) || _.isNil(query.billingObjectService)) throw new BadRequest('remove: missing billing object parameters')
       switch (query.action) {
         case 'customer':
-          await this.removeCustomer(id, query, params.patch)
+          await this.removeCustomer(id, query, _.get(params, 'patch', true))
           break
         case 'subscription':
-          await this.removeSubscription(id, query, params.patch)
+          await this.removeSubscription(id, query, _.get(params, 'patch', true))
           break
       }
     }

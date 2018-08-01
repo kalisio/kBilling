@@ -11,6 +11,7 @@
               <div class="col-11 self-center">
                 <span>&nbsp;</span>
                 <q-icon name="credit_card" />
+                <span>&nbsp;XXXX-{{customer.card.brand}}</span>
                 <span>&nbsp;XXXX-{{customer.card.last4}}</span>
               </div>
               <div class="col-1">
@@ -158,9 +159,9 @@ export default {
         createToken(card).then(data => {
           if (!_.isNil(data.token)) {
             this.customer.card = {
-              id: data.token.id,
               last4: data.token.card.last4
             }
+            this.customer.token = data.token.id
             this.hasCard = true
           }
           this.isCreatingCard = false
