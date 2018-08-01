@@ -199,7 +199,7 @@ describe('kBilling', () => {
     userObject = await userService.get(userObject._id)
     assert.isNull(userObject.billing.subscription)
     // Check Stripe
-    let stripeSubscriptions = await subscriptionService.find({customer: userObject.billing.customer.id})
+    let stripeSubscriptions = await subscriptionService.find({query: {customer: userObject.billing.customer.id}})
     expect(stripeSubscriptions.data.length).to.equals(0)
   })
   // Let enough time to process
@@ -218,7 +218,7 @@ describe('kBilling', () => {
     expect(subscriptionObject.plan.id === userObject.billing.subscription.plan.id)
     expect(userObject.billing.subscription.plan.id).to.equal('plan_DHd5HGwsl31NoC')
     // Check Stripe
-    let stripeSubscriptions = await subscriptionService.find({customer: userObject.billing.customer.id})
+    let stripeSubscriptions = await subscriptionService.find({query: {customer: userObject.billing.customer.id}})
     expect(stripeSubscriptions.data.length).to.equals(1)
   })
   // Let enough time to process
