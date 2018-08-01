@@ -1,10 +1,13 @@
 import makeDebug from 'debug'
 import _ from 'lodash'
 import { Customer, Card, Subscription } from 'feathers-stripe'
+import { BadRequest } from '@feathersjs/errors'
 
 const debug = makeDebug('kalisio:kBilling:billing:service')
 
-const customerFields = ['email', 'description', 'business_vat_id']
+const customerInputFields = ['email', 'description', 'business_vat_id']
+const customerOuputFields = ['id', 'email', 'description', 'business_vat_id', 'card.token', 'card.last4']
+const subscriptionOutputFields = ['id', 'plan.id', 'plan.nickname']
 
 export default function (name, app, options) {
   const config = app.get('billing')
@@ -13,7 +16,7 @@ export default function (name, app, options) {
       debug('Create card ' + token + ' for customer ' + customerId)
       const cardService = app.service('billing/card')
       let card = await cardService.create({source: token}, {customer: customerId})
-      return card
+      return { id: card.id, last4: card.last4 }
     },
     async removeCard (customerId) {
       debug('Remove card from customer ' + customerId)
@@ -24,44 +27,68 @@ export default function (name, app, options) {
       }
     },
     async createCustomer (data) {
-      let customerData = _.pick(data, customerFields)
+      let customerData = _.pick(data, customerInputFields)
+      if (_.isNil(customerData.email)) throw new BadRequest(`createCustomer: missing 'email' parameter`)
       debug('Create customer ' + customerData.email)
       const customerService = app.service('billing/customer')
-      let customer = await customerService.create(customerData)
-      let card = {}
-      if (!_.isNil(data.token)) {
-        card = await this.createCard(customer.id, data.token)
+      let stripeCustomer = await customerService.create(customerData)
+      let customerObject = Object.assign(_.pick(stripeCustomer, customerOuputFields))
+      if (!_.isNil(_.get(data, 'card.id', null))) {
+        let card = await this.createCard(stripeCustomer.id, data.card.id)
+        customerObject = Object.assign(customerObject, {card: card})
       }
-      return Object.assign(customer, {card: card})
+      const billingObjectService = app.getService(data.billingObjectService)
+      await billingObjectService.patch(data.billingObjectId, { 'billing.customer': customerObject })
+      return customerObject
     },
     async updateCustomer (customerId, data) {
-      let customerData = _.pick(data, customerFields)
+      let customerData = _.pick(data, customerInputFields)
       debug('Update customer ' + customerId)
       const customerService = app.service('billing/customer')
-      let customer = await customerService.update(customerId, customerData)
-      let card = {}
-      if (!_.isNil(data.token)) {
+      let stripeCustomer = await customerService.update(customerId, customerData)
+      if (stripeCustomer.sources.total_count > 0) {
         await this.removeCard(customerId)
-        card = await this.createCard(customerId, data.token)
       }
-      return Object.assign(customer, {card: card})
+      let customerObject = Object.assign(_.pick(stripeCustomer, customerOuputFields))
+      if (!_.isNil(_.get(data, 'card.id', null))) {
+        let card = await this.createCard(customerId, data.card.id)
+        customerObject = Object.assign(customerObject, {card: card})
+      }
+      const billingObjectService = app.getService(data.billingObjectService)
+      await billingObjectService.patch(data.billingObjectId, { 'billing.customer': customerObject })
+      return customerObject
     },
-    async removeCustomer (customerId) {
+    async removeCustomer (customerId, query) {
       debug('Remove customer: ' + customerId)
       const customerService = app.service('billing/customer')
       await customerService.remove(customerId)
+      const billingObjectService = app.getService(query.billingObjectService)
+      await billingObjectService.patch(query.billingObjectId, { 'billing.customer': null, 'billing.subscription': null })
     },
     async createSubscription (data) {
-      let subscriptionData = _.pick(data, ['customer', 'plan'])
+      // Map the input parameters to the parameters requested by the underlying feathers service
+      let subscriptionData = _.mapKeys(_.pick(data, ['customerId', 'planId']), (value, key) => {
+        if (key === 'customerId') return 'customer'
+        if (key === 'planId') return 'plan'
+      })
+      // Check the required parameters
+      if (_.isNil(subscriptionData.customer)) throw new BadRequest(`createSubscription: missing 'customer' parameter`)
+      if (_.isNil(subscriptionData.plan)) throw new BadRequest(`createSubscription: missing 'plan' parameter`)
+      // Create the subscription
       debug('Create subscription for ' + data.customer + ' for plan ' + subscriptionData.plan)
       let subscriptionService = app.service('billing/subscription')
-      let subscription = await subscriptionService.create(subscriptionData)
-      return subscription
+      let stripeSubscription = await subscriptionService.create(subscriptionData)
+      let subscriptionObject = _.pick(stripeSubscription, subscriptionOutputFields)
+      const billingObjectService = app.getService(data.billingObjectService)
+      await billingObjectService.patch(data.billingObjectId, { 'billing.subscription': subscriptionObject })
+      return subscriptionObject
     },
-    async removeSubscription (subscriptionId, customerId) {
-      debug('Remove subscripton: ' + subscriptionId + ' for customer ' + customerId)
+    async removeSubscription (subscriptionId, query) {
+      debug('Remove subscripton: ' + subscriptionId + ' for customer ' + query.customerId)
       const subscriptionService = app.service('billing/subscription')
-      await subscriptionService.remove(subscriptionId, {customer: customerId})
+      await subscriptionService.remove(subscriptionId, {customer: query.customerId})
+      const billingObjectService = app.getService(query.billingObjectService)
+      await billingObjectService.patch(query.billingObjectId, { 'billing.subscription': null })
     },
     setup (app) {
       app.use('/billing/customer', new Customer({ secretKey: config.secretKey }))
@@ -71,7 +98,7 @@ export default function (name, app, options) {
     // Used to perform service actions such as create a billing customer, subscription, charge etc.
     async create (data, params) {
       debug(`billing service called for create action=${data.action}`)
-
+      if (_.isNil(data.billingObjectId) || _.isNil(data.billingObjectService)) throw new BadRequest('create: missing billing object parameters')
       switch (data.action) {
         case 'customer':
           let customer = await this.createCustomer(data)
@@ -84,7 +111,7 @@ export default function (name, app, options) {
     // Used to perform service actions such as update a billing subscription etc.
     async update (id, data, params) {
       debug(`billing service called for update action=${data.action}`)
-
+      if (_.isNil(data.billingObjectId) || _.isNil(data.billingObjectService)) throw new BadRequest('update: missing billing object parameters')
       switch (data.action) {
         case 'customer':
           let customer = await this.updateCustomer(id, data)
@@ -95,13 +122,13 @@ export default function (name, app, options) {
     async remove (id, params) {
       const query = params.query
       debug(`billing service called for remove action=${query.action}`)
-
+      if (_.isNil(query.billingObjectId) || _.isNil(query.billingObjectService)) throw new BadRequest('remove: missing billing object parameters')
       switch (query.action) {
         case 'customer':
-          await this.removeCustomer(id)
+          await this.removeCustomer(id, query)
           break
         case 'subscription':
-          await this.removeSubscription(id, params)
+          await this.removeSubscription(id, query)
           break
       }
     }

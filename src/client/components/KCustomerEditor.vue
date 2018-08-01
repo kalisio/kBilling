@@ -6,15 +6,12 @@
           <k-form ref="form" :schema="getSchema()" />
         </div>
         <div>
-          <q-toggle class="k-toggle" icon="fa-retweet" v-model="hasCard" :label="$t('KPaymentEditor.CARD_TOGGLE_LABEL')" />
-        </div>
-        <div v-if="hasCard">
           <q-card>
-            <div v-if="hasToken" class="row">
+            <div v-if="hasCard" class="row">
               <div class="col-11 self-center">
                 <span>&nbsp;</span>
                 <q-icon name="credit_card" />
-                <span>&nbsp;XXXX-{{customer.card}}</span>
+                <span>&nbsp;XXXX-{{customer.card.last4}}</span>
               </div>
               <div class="col-1">
                 <q-btn flat round color="grey-7" @click="onCardCleared">
@@ -30,7 +27,7 @@
                 @change='onCardUpdated' />
               </div>
               <div class="col-1 self-center">
-                <q-spinner v-show="isUpdatingCard" color="grey-7" size="24px" />
+                <q-spinner v-show="isCreatingCard" color="grey-7" size="24px" />
               </div>
             </div>
           </q-card>
@@ -42,14 +39,13 @@
 
 <script>
 import _ from 'lodash'
-import { QToggle, QCard, QBtn, QIcon, QSpinner } from 'quasar-framework'
+import { QCard, QBtn, QIcon, QSpinner } from 'quasar-framework'
 import { Card, createToken } from 'vue-stripe-elements-plus'
 import { mixins as kCoreMixins } from 'kCore/client'
 
 export default {
   name: 'k-customer-editor',
   components: {
-    QToggle,
     QCard,
     QBtn,
     QIcon,
@@ -64,7 +60,7 @@ export default {
       type: String,
       default: ''
     },
-    billingService: {
+    billingObjectService: {
       type: String,
       default: ''
     }
@@ -72,8 +68,7 @@ export default {
   data () {
     return {
       hasCard: false,
-      hasToken: false,
-      isUpdatingCard: false,
+      isCreatingCard: false,
       stripeOptions: {
         // see https://stripe.com/docs/stripe.js#element-options for details
       }
@@ -124,17 +119,12 @@ export default {
       ]
     },
     open (customer) {
-      // Initialize the editor
-      if (!_.isNil(customer)) this.customer = Object.assign(customer)
-      else {
-        this.customer = {
-          email: this.$store.get('user.description'),
-          description: this.$store.get('context.name')
-        }
-      }
-      this.hasToken = this.customer.token
-      this.hasCard = this.hasCard
-
+      this.customer = Object.assign({
+        action: 'customer',
+        billingObjectId: this.billingObjectId,
+        billingObjectService: this.billingObjectService
+      }, customer)
+      if (!_.isNil(this.customer.card)) this.hasCard = true
       // Open the editor
       this.$refs.modal.open()
       // Fill the editor
@@ -143,17 +133,20 @@ export default {
     close (onClose) {
       this.$refs.modal.close(onClose)
     },
-    onUpdateClicked (event, done) {
+    async onUpdateClicked (event, done) {
       let result = this.$refs.form.validate()
       if (result.isValid) {
+        // Update the customer values
         this.customer = Object.assign(this.customer, result.values)
-
+        // Update the customer biling object
         const billingService = this.$api.getService('billing')
-        billingService.create(Object.assign(this.customer, {
-          action: 'customer',
-          billingObjectId: this.billingObjectId,
-          billingService: this.billingService
-        }))
+        let response = {}
+        if (_.isNil(this.customer.id)) {
+          response = await billingService.create(this.customer)
+        } else {
+          response = await billingService.update(this.customer.id, this.customer)
+        }
+        this.$emit('customer-updated', response)
         this.close(done())
       } else {
         done()
@@ -161,21 +154,23 @@ export default {
     },
     onCardUpdated (card) {
       if (card.complete) {
-        this.isUpdatingCard = true
+        this.isCreatingCard = true
         createToken(card).then(data => {
           if (!_.isNil(data.token)) {
-            this.customer.token = data.token.id
-            this.customer.card = data.token.card.last4
-            this.hasToken = true
+            this.customer.card = {
+              id: data.token.id,
+              last4: data.token.card.last4
+            }
+            this.hasCard = true
           }
-          this.isUpdatingCard = false
+          this.isCreatingCard = false
         })
       }
     },
     onCardCleared () {
-      _.unset(this.customer.token)
-      _.unset(this.customer.card)
-      this.hasToken = false
+      _.unset(this.customer, 'card')
+      console.log(this.customer)
+      this.hasCard = false
     }
   },
   created () {

@@ -1,11 +1,11 @@
-import chai, { util, expect } from 'chai'
+import chai, { util, expect, assert } from 'chai'
 import chailint from 'chai-lint'
 import core, { kalisio, hooks, permissions } from 'kCore'
 import billing from '../src'
 
 describe('kBilling', () => {
   let app, server, port,
-    userService, userObject, billingService
+    userService, userObject, billingService, customerObject, subscriptionObject
 
   before(() => {
     chailint(chai, util)
@@ -52,7 +52,118 @@ describe('kBilling', () => {
     })
   })
   // Let enough time to process
-  .timeout(5000)
+  .timeout(7500)
+
+  it('create a customer', async () => {
+    customerObject = await billingService.create({
+      action: 'customer',
+      email: 'customer@kalisio.xyz',
+      description: 'A customer',
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    userObject = await userService.get(userObject._id)
+    expect(customerObject.id === userObject.billing.customer.id)
+    expect(customerObject.email === userObject.billing.customer.email)
+    expect(customerObject.description === userObject.billing.customer.description)
+  })
+  // Let enough time to process
+  .timeout(7500)
+
+  it('update a customer with a visa card', async () => {
+    customerObject = await billingService.update(customerObject.id, {
+      action: 'customer',
+      email: 'visa@kalisio.xyz',
+      description: 'A visa purchaser',
+      card: { id: 'tok_visa' },
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    userObject = await userService.get(userObject._id)
+    expect(userObject.billing.customer.email).to.equal('visa@kalisio.xyz')
+    expect(customerObject.card.id === userObject.billing.customer.card.id)
+    expect(customerObject.card.last4 === userObject.billing.customer.card.last4)
+  })
+  // Let enough time to process
+  .timeout(7500)
+
+  it('update a customer with a mastercard', async () => {
+    customerObject = await billingService.update(customerObject.id, {
+      action: 'customer',
+      email: 'mastercard@kalisio.xyz',
+      description: 'A mastercard purchaser',
+      card: { id: 'tok_mastercard' },
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    userObject = await userService.get(userObject._id)
+    expect(userObject.billing.customer.email).to.equal('mastercard@kalisio.xyz')
+    expect(customerObject.card.id === userObject.billing.customer.card.id)
+    expect(customerObject.card.last4 === userObject.billing.customer.card.last4)
+  })
+  // Let enough time to process
+  .timeout(7500)
+
+  it('subscribe a customer to a plan', async () => {
+    subscriptionObject = await billingService.create({
+      action: 'subscription',
+      customerId: customerObject.id,
+      planId: 'plan_DHd5RMLMSlpUmQ',
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    userObject = await userService.get(userObject._id)
+    expect(subscriptionObject.id === userObject.billing.subscription.id)
+    expect(subscriptionObject.plan.id === userObject.billing.subscription.plan.id)
+    expect(userObject.billing.subscription.plan.id).to.equal('plan_DHd5RMLMSlpUmQ')
+  })
+  // Let enough time to process
+  .timeout(7500)
+
+  it('unsubscribe a customer from the plan', async () => {
+    await billingService.remove(subscriptionObject.id, {
+      query: {
+        action: 'subscription',
+        billingObjectId: userObject._id,
+        billingObjectService: 'users'
+      }
+    })
+    userObject = await userService.get(userObject._id)
+    assert.isNull(userObject.billing.subscription)
+  })
+  // Let enough time to process
+  .timeout(7500)
+
+  it('subscribe a customer to a plan', async () => {
+    subscriptionObject = await billingService.create({
+      action: 'subscription',
+      customerId: customerObject.id,
+      planId: 'plan_DHd5HGwsl31NoC',
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    userObject = await userService.get(userObject._id)
+    expect(subscriptionObject.id === userObject.billing.subscription.id)
+    expect(subscriptionObject.plan.id === userObject.billing.subscription.plan.id)
+    expect(userObject.billing.subscription.plan.id).to.equal('plan_DHd5HGwsl31NoC')
+  })
+  // Let enough time to process
+  .timeout(7500)
+
+  it('removes the customer', async () => {
+    await billingService.remove(customerObject.id, {
+      query: {
+        action: 'customer',
+        billingObjectId: userObject._id,
+        billingObjectService: 'users'
+      }
+    })
+    userObject = await userService.get(userObject._id)
+    assert.isNull(userObject.billing.subscription)
+    assert.isNull(userObject.billing.customer)
+  })
+  // Let enough time to process
+  .timeout(7500)
 
   it('removes the test user', () => {
     return userService.remove(userObject._id, {
@@ -67,7 +178,7 @@ describe('kBilling', () => {
     })
   })
   // Let enough time to process
-  .timeout(5000)
+  .timeout(7500)
 
   // Cleanup
   after(() => {
