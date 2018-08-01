@@ -58,12 +58,14 @@ export default function (name, app, options) {
       await billingObjectService.patch(data.billingObjectId, { 'billing.customer': customerObject })
       return customerObject
     },
-    async removeCustomer (customerId, query) {
+    async removeCustomer (customerId, query, patch = true) {
       debug('Remove customer: ' + customerId)
       const customerService = app.service('billing/customer')
       await customerService.remove(customerId)
-      const billingObjectService = app.getService(query.billingObjectService)
-      await billingObjectService.patch(query.billingObjectId, { 'billing.customer': null, 'billing.subscription': null })
+      if (patch) {
+        const billingObjectService = app.getService(query.billingObjectService)
+        await billingObjectService.patch(query.billingObjectId, { 'billing.customer': null, 'billing.subscription': null })
+      }
     },
     async createSubscription (data) {
       // Map the input parameters to the parameters requested by the underlying feathers service
@@ -83,12 +85,14 @@ export default function (name, app, options) {
       await billingObjectService.patch(data.billingObjectId, { 'billing.subscription': subscriptionObject })
       return subscriptionObject
     },
-    async removeSubscription (subscriptionId, query) {
+    async removeSubscription (subscriptionId, query, patch = true) {
       debug('Remove subscripton: ' + subscriptionId + ' for customer ' + query.customerId)
       const subscriptionService = app.service('billing/subscription')
       await subscriptionService.remove(subscriptionId, {customer: query.customerId})
-      const billingObjectService = app.getService(query.billingObjectService)
-      await billingObjectService.patch(query.billingObjectId, { 'billing.subscription': null })
+      if (patch) {
+        const billingObjectService = app.getService(query.billingObjectService)
+        await billingObjectService.patch(query.billingObjectId, { 'billing.subscription': null })
+      }
     },
     setup (app) {
       app.use('/billing/customer', new Customer({ secretKey: config.secretKey }))
@@ -125,10 +129,10 @@ export default function (name, app, options) {
       if (_.isNil(query.billingObjectId) || _.isNil(query.billingObjectService)) throw new BadRequest('remove: missing billing object parameters')
       switch (query.action) {
         case 'customer':
-          await this.removeCustomer(id, query)
+          await this.removeCustomer(id, query, params.patch)
           break
         case 'subscription':
-          await this.removeSubscription(id, query)
+          await this.removeSubscription(id, query, params.patch)
           break
       }
     }
