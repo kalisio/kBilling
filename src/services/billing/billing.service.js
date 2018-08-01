@@ -48,6 +48,9 @@ export default function (name, app, options) {
       if (stripeCustomer.sources.total_count > 0) {
         await this.removeCard(customerId)
       }
+      if (stripeCustomer.subscriptions.total_count > 0) {
+        // FIXME: manage existing subscription
+      }
       let customerObject = Object.assign(_.pick(stripeCustomer, customerOuputFields))
       if (!_.isNil(_.get(data, 'token', null))) {
         let card = await this.createCard(customerId, data.token)

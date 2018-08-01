@@ -7,10 +7,10 @@ export async function removeBilling (hook) {
     throw new Error(`The 'removeBilling' hook should only be used as a 'after' hook.`)
   }
 
-  let customer = hook.result.billing.customer
+  let customer = _.get(hook.result, 'billing.customer', null)
   if (!_.isNil(customer)) {
     let billingObjectId = hook.result._id
-    let billingObjectService = hook.service
+    let billingObjectService = hook.service.path
     let customerId = hook.result.billing.customer.id
     debug('Removing billing from object ' + billingObjectId + ' of service ' + billingObjectService)
     const billingService = hook.app.getService('billing')
