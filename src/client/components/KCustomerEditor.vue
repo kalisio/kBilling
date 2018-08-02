@@ -27,8 +27,8 @@
           <div v-else class="row no-margin">
             <div class="col-11 self-center">
               <card class='k-stripe-card'
-              stripe='pk_test_wheeY3y0i6ComzWo7YLd4b1W'
-              :options='stripeOptions'
+              :stripe="$config('stripe.secretKey')"
+              :options="$config('stripe.options')"
               @change='onCardUpdated' />
             </div>
             <div class="col-1 self-center">
@@ -74,6 +74,7 @@ export default {
       email: '',
       hasCard: false,
       isCreatingCard: false,
+
       stripeOptions: {
         // see https://stripe.com/docs/stripe.js#element-options for details
       }
