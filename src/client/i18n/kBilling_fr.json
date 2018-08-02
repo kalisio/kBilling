@@ -4,7 +4,7 @@
     "CUSTOMER_EMAIL_FIELD_HELPER": "Saisissez l'adresse email de facturation",
     "CUSTOMER_DESCRIPTION_FIELD_HELPER": "Saisissez une mention à ajouter à votre facture",
     "CUSTOMER_VAT_NUMBER_FIELD_HELPER": "Saisissez votre numéro de TVA",
-    "CARD_TOGGLE_LABEL": "Payez à l'aide d'une carte bancaire",
+    "BILLING_METHOD_MESSAGE": "Saisissez une carte bancaire pour payer automatiquement",
     "CLOSE_ACTION": "Fermer",
     "UPDATE_BUTTON": "mettre à jour"
   },

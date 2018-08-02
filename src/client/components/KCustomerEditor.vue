@@ -1,37 +1,37 @@
 <template>
   <k-modal ref="modal" :title="$t('KPaymentEditor.TITLE')" :toolbar="getToolbar()" :buttons="getButtons()" :route="false">
     <div slot="modal-content"> 
-      <div class="column gutter-md">
+      <div class="column">
         <div>
           <k-form ref="form" :schema="getSchema()" />
         </div>
         <div>
-          <q-card>
-            <div v-if="hasCard" class="row">
-              <div class="col-11 self-center">
-                <span>&nbsp;</span>
-                <q-icon name="credit_card" />
-                <span>&nbsp;XXXX-{{customer.card.brand}}</span>
-                <span>&nbsp;XXXX-{{customer.card.last4}}</span>
-              </div>
-              <div class="col-1">
-                <q-btn flat round color="grey-7" @click="onCardCleared">
-                  <q-icon name="cancel" />
-                </q-btn>
-              </div>
+          <div>&nbsp;</div>
+          <span>{{$t('KPaymentEditor.BILLING_METHOD_MESSAGE')}}</span>
+          <div v-if="hasCard" class="row no-margin">
+            <div class="col-11 self-center">
+              <span>&nbsp;</span>
+              <q-icon name="credit_card" />
+              <span>&nbsp;{{customer.card.brand}}</span>
+              <span>&nbsp;XXXX-{{customer.card.last4}}</span>
             </div>
-            <div v-else class="row">
-              <div class="col-11 self-center">
-                <card class='k-stripe-card'
-                stripe='pk_test_wheeY3y0i6ComzWo7YLd4b1W'
-                :options='stripeOptions'
-                @change='onCardUpdated' />
-              </div>
-              <div class="col-1 self-center">
-                <q-spinner v-show="isCreatingCard" color="grey-7" size="24px" />
-              </div>
+            <div class="col-1">
+              <q-btn flat round color="grey-7" @click="onCardCleared">
+                <q-icon name="cancel" />
+              </q-btn>
             </div>
-          </q-card>
+          </div>
+          <div v-else class="row no-margin">
+            <div class="col-11 self-center">
+              <card class='k-stripe-card'
+              stripe='pk_test_wheeY3y0i6ComzWo7YLd4b1W'
+              :options='stripeOptions'
+              @change='onCardUpdated' />
+            </div>
+            <div class="col-1 self-center">
+              <q-spinner v-show="isCreatingCard" color="grey-7" size="24px" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
