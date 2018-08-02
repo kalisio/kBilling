@@ -98,8 +98,7 @@ export default {
             'type': 'string',
             'field': {
               'component': 'form/KTextField',
-              'helper': 'KCustomerEditor.CUSTOMER_VAT_NUMBER_FIELD_HELPER',
-              'disabled': true
+              'helper': 'KCustomerEditor.CUSTOMER_VAT_NUMBER_FIELD_HELPER'
             }
           }
         }
@@ -167,6 +166,7 @@ export default {
     },
     onCardCleared () {
       _.unset(this.customer, 'card')
+      _.unset(this.card, 'token')
       this.hasCard = false
     }
   },

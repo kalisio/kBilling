@@ -17,13 +17,17 @@ export default function (name, app, options) {
       let card = await cardService.create({source: token}, {customer: customerId})
       return { id: card.id, brand: card.brand, last4: card.last4 }
     },
-    async removeCard (customerId) {
+    async removeCard (customerId, cardId) {
       debug('Remove card from customer ' + customerId)
       const cardService = app.service('billing/card')
-      let cards = await cardService.find({customer: customerId})
-      for (var i = 0; i < cards.data.length; i++) {
-        await cardService.remove(cards.data[i].id, {customer: customerId})
-      }
+      await cardService.remove(cardId, {customer: customerId})
+    },
+    async updateBilling (subscriptionId, billingMethod) {
+      debug('Update billing for subscription ' + subscriptionId + ' with method ' + billingMethod)
+      let subscriptionData = { billing: billingMethod }
+      if (billingMethod === 'send_invoice') subscriptionData['days_until_due'] = config.daysUntilInvoiceDue
+      const subscriptionService = app.service('billing/subscription')
+      await subscriptionService.update(subscriptionId, subscriptionData)
     },
     async createCustomer (data) {
       let customerData = _.pick(data, customerInputFields)
@@ -45,16 +49,31 @@ export default function (name, app, options) {
       debug('Update customer ' + customerId)
       const customerService = app.service('billing/customer')
       let stripeCustomer = await customerService.update(customerId, customerData)
-      if (stripeCustomer.sources.total_count > 0) {
-        await this.removeCard(customerId)
-      }
-      if (stripeCustomer.subscriptions.total_count > 0) {
-        // FIXME: manage existing subscription
-      }
       let customerObject = Object.assign(_.pick(stripeCustomer, customerOuputFields))
-      if (!_.isNil(_.get(data, 'token', null))) {
+      if (stripeCustomer.sources.total_count > 0) {
+        // do we need to remove the card
+        if (_.isNil(data.card)) {
+          // Card has been removed
+          await this.removeCard(customerId, stripeCustomer.sources.data[0].id)
+          // Update subscription if needed
+          if (stripeCustomer.subscriptions.total_count > 0) {
+            if (_.isNil(data.token)) await this.updateBilling(stripeCustomer.subscriptions.data[0].id, 'send_invoice')
+          }
+        }
+        if (!_.isNil(data.token)) {
+          // Card has been replaced
+          if (!_.isNil(data.card)) await this.removeCard(customerId, stripeCustomer.sources.data[0].id)
+          let card = await this.createCard(customerId, data.token)
+          customerObject = Object.assign(customerObject, {card: card})
+        }
+      } else if (!_.isNil(data.token)) {
+        // Card has been added
         let card = await this.createCard(customerId, data.token)
         customerObject = Object.assign(customerObject, {card: card})
+        // Update subscription if needed
+        if (stripeCustomer.subscriptions.total_count > 0) {
+          await this.updateBilling(stripeCustomer.subscriptions.data[0].id, 'charge_automatically')
+        }
       }
       const billingObjectService = app.getService(data.billingObjectService)
       await billingObjectService.patch(data.billingObjectId, { 'billing.customer': customerObject })
