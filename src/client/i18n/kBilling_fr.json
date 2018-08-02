@@ -1,15 +1,11 @@
 {
-  "KPaymentEditor": {
-    "TITLE": "Choisissez votre méthode de paiement",
-    "CUSTOMER_EMAIL_FIELD_HELPER": "Saisissez l'adresse email de facturation",
+  "KCustomerEditor": {
+    "TITLE": "Saisissez vos informations de paiement",
+    "INVOICE_ADDRESS_MESSAGE": "Les factures seront envoyées à <b>{{email}}</b>",
     "CUSTOMER_DESCRIPTION_FIELD_HELPER": "Saisissez une mention à ajouter à votre facture",
     "CUSTOMER_VAT_NUMBER_FIELD_HELPER": "Saisissez votre numéro de TVA",
-    "BILLING_METHOD_MESSAGE": "Saisissez une carte bancaire pour payer automatiquement",
+    "BILLING_METHOD_MESSAGE": "Saisissez une carte bancaire si vous voulez payer de façon automatique",
     "CLOSE_ACTION": "Fermer",
     "UPDATE_BUTTON": "mettre à jour"
-  },
-  "KPaymentField": {
-    "INVOICE_METHOD_LABEL": "Par facturation",
-    "CARD_METHOD_LABEL": "Par carte de crédit"
   }
 }

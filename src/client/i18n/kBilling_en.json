@@ -1,15 +1,11 @@
 {
-  "KPaymentEditor": {
-    "TITLE": "Choose your payment method",
-    "CUSTOMER_EMAIL_FIELD_HELPER": "Enter the invoice email address",
+  "KCustomerEditor": {
+    "TITLE": "Enter your billing information",
+    "INVOICE_ADDRESS_MESSAGE": "Invoices will be send to <b>{{email}}</b>",
     "CUSTOMER_DESCRIPTION_FIELD_HELPER": "Enter a mention to add to your invoice",
     "CUSTOMER_VAT_NUMBER_FIELD_HELPER": "Enter your VAT number",
-    "BILLING_METHOD_MESSAGE": "Enter a credit card to be charged automatically",
+    "BILLING_METHOD_MESSAGE": "Enter a credit card if you like to be charged automatically",
     "CLOSE_ACTION": "Close",
     "UPDATE_BUTTON": "Update"
-  },
-  "KPaymentField": {
-    "INVOICE_METHOD_LABEL": "By invoices",
-    "CARD_METHOD_LABEL": "By credit card"
   }
 }

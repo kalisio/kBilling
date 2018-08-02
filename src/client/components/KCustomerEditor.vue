@@ -1,13 +1,16 @@
 <template>
-  <k-modal ref="modal" :title="$t('KPaymentEditor.TITLE')" :toolbar="getToolbar()" :buttons="getButtons()" :route="false">
+  <k-modal ref="modal" :title="$t('KCustomerEditor.TITLE')" :toolbar="getToolbar()" :buttons="getButtons()" :route="false">
     <div slot="modal-content"> 
       <div class="column">
+        <div>
+          <p v-html="$t('KCustomerEditor.INVOICE_ADDRESS_MESSAGE', {email})" />
+        </div>
         <div>
           <k-form ref="form" :schema="getSchema()" />
         </div>
         <div>
           <div>&nbsp;</div>
-          <span>{{$t('KPaymentEditor.BILLING_METHOD_MESSAGE')}}</span>
+          <p v-html="$t('KCustomerEditor.BILLING_METHOD_MESSAGE')" />
           <div v-if="hasCard" class="row no-margin">
             <div class="col-11 self-center">
               <span>&nbsp;</span>
@@ -68,6 +71,7 @@ export default {
   },
   data () {
     return {
+      email: '',
       hasCard: false,
       isCreatingCard: false,
       stripeOptions: {
@@ -80,43 +84,35 @@ export default {
       return {
         '$schema': 'http://json-schema.org/draft-06/schema#',
         '$id': 'http://kalisio.xyz/schemas/edit-customer',
-        'title': 'KPaymentEditor.TITLE',
+        'title': 'KCustomerEditor.TITLE',
         'type': 'object',
         'properties': {
-          'email': {
-            'type': 'string',
-            'format': 'email',
-            'field': {
-              'component': 'form/KEmailField',
-              'helper': 'KPaymentEditor.CUSTOMER_EMAIL_FIELD_HELPER'
-            }
-          },
           'description': {
             'type': 'string',
             'field': {
               'component': 'form/KTextareaField',
-              'helper': 'KPaymentEditor.CUSTOMER_DESCRIPTION_FIELD_HELPER'
+              'helper': 'KCustomerEditor.CUSTOMER_DESCRIPTION_FIELD_HELPER'
             }
           },
           'business_vat_id': {
             'type': 'string',
             'field': {
               'component': 'form/KTextField',
-              'helper': 'KPaymentEditor.CUSTOMER_VAT_NUMBER_FIELD_HELPER'
+              'helper': 'KCustomerEditor.CUSTOMER_VAT_NUMBER_FIELD_HELPER',
+              'disabled': true
             }
           }
-        },
-        'required': ['email']
+        }
       }
     },
     getToolbar () {
       return [
-        { name: 'close-action', label: this.$t('KPaymentEditor.CLOSE_ACTION'), icon: 'close', handler: () => this.close() }
+        { name: 'close-action', label: this.$t('KCustomerEditor.CLOSE_ACTION'), icon: 'close', handler: () => this.close() }
       ]
     },
     getButtons () {
       return [
-        { name: 'update-button', label: this.$t('KPaymentEditor.UPDATE_BUTTON'), color: 'primary', handler: (event, done) => this.onUpdateClicked(event, done) }
+        { name: 'update-button', label: this.$t('KCustomerEditor.UPDATE_BUTTON'), color: 'primary', handler: (event, done) => this.onUpdateClicked(event, done) }
       ]
     },
     open (customer) {
@@ -126,6 +122,7 @@ export default {
         billingObjectService: this.billingObjectService
       }, customer)
       if (!_.isNil(this.customer.card)) this.hasCard = true
+      this.email = this.customer.email
       // Open the editor
       this.$refs.modal.open()
       // Fill the editor
@@ -170,7 +167,6 @@ export default {
     },
     onCardCleared () {
       _.unset(this.customer, 'card')
-      console.log(this.customer)
       this.hasCard = false
     }
   },
