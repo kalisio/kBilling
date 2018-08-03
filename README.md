@@ -7,7 +7,7 @@
 [![Documentation](https://img.shields.io/badge/documentation-available-brightgreen.svg)](https://kalisio.gitbooks.io/kalisio/api)
 [![Known Vulnerabilities](https://snyk.io/test/github/kalisio/kBilling/badge.svg)](https://snyk.io/test/github/kalisio/kBilling)
 
-> Basic utils to provide mapping capabilities for Kalisio applications and services
+> Basic utils to provide billing capabilities for Kalisio applications and services
 
 ## Installation
 
