@@ -1,7 +1,7 @@
 {
   "KCustomerEditor": {
     "TITLE": "Saisissez vos informations de paiement",
-    "INVOICE_ADDRESS_MESSAGE": "Les factures seront envoyées à <b>{{email}}</b>",
+    "CUSTOMER_EMAIL_FIELD_HELPER": "Sélectionnez le destinataire des factures",
     "CUSTOMER_DESCRIPTION_FIELD_HELPER": "Saisissez une mention à ajouter à votre facture",
     "CUSTOMER_VAT_NUMBER_FIELD_HELPER": "Saisissez votre numéro de TVA",
     "BILLING_METHOD_MESSAGE": "Saisissez une carte bancaire si vous voulez payer de façon automatique",
