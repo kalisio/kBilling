@@ -3,9 +3,6 @@
     <div slot="modal-content"> 
       <div class="column">
         <div>
-          <p v-html="$t('KCustomerEditor.INVOICE_ADDRESS_MESSAGE', {email})" />
-        </div>
-        <div>
           <k-form ref="form" :schema="getSchema()" />
         </div>
         <div>
@@ -71,13 +68,8 @@ export default {
   },
   data () {
     return {
-      email: '',
       hasCard: false,
-      isCreatingCard: false,
-
-      stripeOptions: {
-        // see https://stripe.com/docs/stripe.js#element-options for details
-      }
+      isCreatingCard: false
     }
   },
   methods: {
@@ -88,6 +80,15 @@ export default {
         'title': 'KCustomerEditor.TITLE',
         'type': 'object',
         'properties': {
+          'email': {
+            'type': 'string',
+            'field': {
+              'component': 'form/KSelectField',
+              'helper': 'KCustomerEditor.CUSTOMER_EMAIL_FIELD_HELPER',
+              'type': 'radio',
+              'options': []
+            }
+          },
           'description': {
             'type': 'string',
             'field': {
@@ -95,14 +96,15 @@ export default {
               'helper': 'KCustomerEditor.CUSTOMER_DESCRIPTION_FIELD_HELPER'
             }
           },
-          'business_vat_id': {
+          'vatNumber': {
             'type': 'string',
             'field': {
               'component': 'form/KTextField',
               'helper': 'KCustomerEditor.CUSTOMER_VAT_NUMBER_FIELD_HELPER'
             }
           }
-        }
+        },
+        'required': ['email']
       }
     },
     getToolbar () {
@@ -115,14 +117,15 @@ export default {
         { name: 'update-button', label: this.$t('KCustomerEditor.UPDATE_BUTTON'), color: 'primary', handler: (event, done) => this.onUpdateClicked(event, done) }
       ]
     },
-    open (customer) {
+    open (customer, purchasers) {
       this.customer = Object.assign({
         action: 'customer',
         billingObjectId: this.billingObjectId,
         billingObjectService: this.billingObjectService
       }, customer)
       if (!_.isNil(this.customer.card)) this.hasCard = true
-      this.email = this.customer.email
+      // Updated the purchasers selection
+      this.$refs.form.getField('email').properties.field.options = purchasers
       // Open the editor
       this.$refs.modal.open()
       // Fill the editor

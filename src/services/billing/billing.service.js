@@ -6,8 +6,16 @@ import { BadRequest } from '@feathersjs/errors'
 
 const debug = makeDebug('kalisio:kBilling:billing:service')
 
-const customerInputFields = ['email', 'description', 'business_vat_id']
-const customerOuputFields = ['id', 'email', 'description', 'business_vat_id']
+const propertiesToOmit = ['billingObjectId', 'billingObjectService', 'action']
+
+function toStripeCustomerData (data) {
+  if (_.isNil(data.email)) throw new BadRequest(`createCustomer: missing 'email' parameter`)
+  return {
+    email: data.email,
+    description: _.get(data, 'description', ''),
+    business_vat_id: _.get(data, 'vatNumber', '')
+  }
+}
 
 export default function (name, app, options) {
   const config = app.get('billing')
@@ -31,12 +39,11 @@ export default function (name, app, options) {
       await subscriptionService.update(subscriptionId, subscriptionData)
     },
     async createCustomer (data) {
-      let customerData = _.pick(data, customerInputFields)
-      if (_.isNil(customerData.email)) throw new BadRequest(`createCustomer: missing 'email' parameter`)
-      debug('Create customer ' + customerData.email)
+      let stripeCustomerData = toStripeCustomerData(data)
+      debug('Create customer ' + stripeCustomerData.email)
       const customerService = app.service('billing/customer')
-      let stripeCustomer = await customerService.create(customerData)
-      let customerObject = Object.assign(_.pick(stripeCustomer, customerOuputFields))
+      let stripeCustomer = await customerService.create(stripeCustomerData)
+      let customerObject = Object.assign({id: stripeCustomer.id}, _.omit(data, propertiesToOmit))
       if (!_.isNil(_.get(data, 'token', null))) {
         let card = await this.createCard(stripeCustomer.id, data.token)
         customerObject = Object.assign(customerObject, {card: card})
@@ -46,11 +53,11 @@ export default function (name, app, options) {
       return customerObject
     },
     async updateCustomer (customerId, data) {
-      let customerData = _.pick(data, customerInputFields)
+      let stripeCustomerData = toStripeCustomerData(data)
       debug('Update customer ' + customerId)
       const customerService = app.service('billing/customer')
-      let stripeCustomer = await customerService.update(customerId, customerData)
-      let customerObject = Object.assign(_.pick(stripeCustomer, customerOuputFields))
+      let stripeCustomer = await customerService.update(customerId, stripeCustomerData)
+      let customerObject = Object.assign({id: customerId}, _.omit(data, propertiesToOmit))
       if (stripeCustomer.sources.total_count > 0) {
         // do we need to remove the card
         if (_.isNil(data.card)) {
@@ -90,22 +97,25 @@ export default function (name, app, options) {
       }
     },
     async createSubscription (data) {
-      // Map the input parameters to the parameters requested by the underlying feathers service
-      let subscriptionData = _.mapKeys(_.pick(data, ['customerId', 'planId', 'billing']), (value, key) => {
-        if (key === 'customerId') return 'customer'
-        if (key === 'planId') return 'plan'
-        if (key === 'billing') return 'billing'
-      })
-      let billingMethod = _.get(subscriptionData, 'billing', 'charge_automatically')
-      if (billingMethod === 'send_invoice') subscriptionData['days_until_due'] = config.daysUntilInvoiceDue
-      // Check the required parameters
-      if (_.isNil(subscriptionData.customer)) throw new BadRequest(`createSubscription: missing 'customer' parameter`)
-      if (_.isNil(subscriptionData.plan)) throw new BadRequest(`createSubscription: missing 'plan' parameter`)
+      if (_.isNil(data.customerId)) throw new BadRequest(`createSubscription: missing 'customerId' parameter`)
+      if (_.isNil(data.planId)) throw new BadRequest(`createSubscription: missing 'planId' parameter`)
+      let stripeSubscriptionData = {
+        customer: data.customerId,
+        plan: data.planId,
+        billing: _.get(data, 'billing', 'charge_automatically')
+      }
+      if (stripeSubscriptionData.billing === 'send_invoice') stripeSubscriptionData['days_until_due'] = config.daysUntilInvoiceDue
       // Create the subscription
-      debug('Create subscription for ' + data.customer + ' for plan ' + subscriptionData.plan)
-      let subscriptionService = app.service('billing/subscription')
-      let stripeSubscription = await subscriptionService.create(subscriptionData)
-      let subscriptionObject = _.pick(stripeSubscription, ['id', 'plan.id', 'plan.nickname'])
+      debug('Create subscription for ' + data.customer + ' for plan ' + stripeSubscriptionData.plan)
+      const subscriptionService = app.service('billing/subscription')
+      let stripeSubscription = await subscriptionService.create(stripeSubscriptionData)
+      let subscriptionObject = {
+        id: stripeSubscription.id,
+        plan: {
+          id: stripeSubscription.plan.id,
+          name: stripeSubscription.plan.nickname
+        }
+      }
       const billingObjectService = app.getService(data.billingObjectService)
       await billingObjectService.patch(data.billingObjectId, { 'billing.subscription': subscriptionObject })
       return subscriptionObject
@@ -121,11 +131,11 @@ export default function (name, app, options) {
     },
     setup (app) {
       app.use('/billing/customer', new Customer({ secretKey: config.secretKey }))
-      app.service('billing/customer').hooks({ before: {all: disallow('external')}})
+      app.service('billing/customer').hooks({ before: { all: disallow('external') } })
       app.use('/billing/card', new Card({ secretKey: config.secretKey }))
-      app.service('billing/card').hooks({ before: {all: disallow('external')}})
+      app.service('billing/card').hooks({ before: { all: disallow('external') } })
       app.use('/billing/subscription', new Subscription({ secretKey: config.secretKey }))
-      app.service('billing/subscription').hooks({ before: {all: disallow('external')}})
+      app.service('billing/subscription').hooks({ before: { all: disallow('external') } })
     },
     // Used to perform service actions such as create a billing customer, subscription, charge etc.
     async create (data, params) {
