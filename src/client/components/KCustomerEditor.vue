@@ -183,10 +183,6 @@ export default {
 </script>
 
 <style>
-.k-toggle {
-  margin-top: 2rem;
-  margin-bottom: 2rem
-}
 .k-stripe-card {
   margin: 8px;
 }
