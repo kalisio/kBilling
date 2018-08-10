@@ -122,7 +122,6 @@ export default function (name, app, options) {
     },
     async removeSubscription (subscriptionId, query, patch) {
       if (_.isNil(query.customerId)) throw new BadRequest(`removeSubscription: missing 'customerId' parameter`)
-      if (_.isNil(query.subscriptionId)) throw new BadRequest(`removeSubscription: missing 'subscriptionId' parameter`)
       debug('Remove subscripton: ' + subscriptionId + ' for customer ' + query.customerId)
       const subscriptionService = app.service('billing/subscription')
       await subscriptionService.remove(subscriptionId, {customer: query.customerId})
