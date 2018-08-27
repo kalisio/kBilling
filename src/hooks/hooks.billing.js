@@ -34,10 +34,14 @@ export async function subscribeDefaultPlan (hook) {
   let billingObjectId = hook.result._id
   let billingObjectService = hook.service.path
   debug('Subscribing object ' + billingObjectId + ' of service ' + billingObjectService + ' to default plan')
+  let defaultPlan = _.find(hook.app.get('plans'), { 'default': true })
+  if (_.isNil(defaultPlan)) {
+    throw new Error(`The 'subscribeDefaultPlan' requires a default plan to be defined`)
+  }
   const billingService = hook.app.getService('billing')
   await billingService.create({
     action: 'subscription',
-    plan: 'bronze',
+    plan: defaultPlan,
     billingObjectId: billingObjectId,
     billingObjectService: billingObjectService
   })
