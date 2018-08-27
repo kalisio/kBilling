@@ -142,10 +142,10 @@ export default {
         // Update the customer biling object
         const billingService = this.$api.getService('billing')
         let response = {}
-        if (_.isNil(this.customer.id)) {
+        if (_.isNil(this.customer.stripeId)) {
           response = await billingService.create(this.customer)
         } else {
-          response = await billingService.update(this.customer.id, this.customer)
+          response = await billingService.update(this.customer.stripeId, this.customer)
         }
         this.$emit('customer-updated', response)
         this.close(done())

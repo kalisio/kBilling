@@ -11,7 +11,7 @@ export async function removeBilling (hook) {
   if (!_.isNil(customer)) {
     let billingObjectId = hook.result._id
     let billingObjectService = hook.service.path
-    let customerId = hook.result.billing.customer.id
+    let customerId = hook.result.billing.customer.stripeId
     debug('Removing billing from object ' + billingObjectId + ' of service ' + billingObjectService)
     const billingService = hook.app.getService('billing')
     await billingService.remove(customerId, {

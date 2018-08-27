@@ -47,7 +47,7 @@ export default function (name, app, options) {
       debug('create card ' + token + ' for customer ' + customerId)
       const cardService = app.service('billing/card')
       let card = await cardService.create({source: token}, {customer: customerId})
-      return { id: card.id, brand: card.brand, last4: card.last4 }
+      return { stripeId: card.id, brand: card.brand, last4: card.last4 }
     },
     async removeStripeCard (customerId, cardId) {
       debug('remove card from customer ' + customerId)
@@ -66,7 +66,7 @@ export default function (name, app, options) {
       debug('create customer ' + stripeCustomerData.email)
       const customerService = app.service('billing/customer')
       let stripeCustomer = await customerService.create(stripeCustomerData)
-      let customerObject = Object.assign({id: stripeCustomer.id}, _.omit(data, propertiesToOmit))
+      let customerObject = Object.assign({ stripeId: stripeCustomer.id }, _.omit(data, propertiesToOmit))
       if (!_.isNil(_.get(data, 'token', null))) {
         let card = await this.createStripeCard(stripeCustomer.id, data.token)
         customerObject = Object.assign(customerObject, {card: card})
@@ -80,7 +80,7 @@ export default function (name, app, options) {
       debug('update customer ' + customerId)
       const customerService = app.service('billing/customer')
       let stripeCustomer = await customerService.update(customerId, stripeCustomerData)
-      let customerObject = Object.assign({id: customerId}, _.omit(data, propertiesToOmit))
+      let customerObject = Object.assign({ stripeId: customerId }, _.omit(data, propertiesToOmit))
       if (stripeCustomer.sources.total_count > 0) {
         // do we need to remove the card
         if (_.isNil(data.card)) {
@@ -125,12 +125,12 @@ export default function (name, app, options) {
       let subscription = { plan: data.plan }
       if (!_.isNil(config.plans[data.plan].stripeId)) {
         let billing = await this.getBillingPerspective(data.billingObjectId, data.billingObjectService)
-        let customerId = _.get(billing, 'billing.customer.id')
+        let customerId = _.get(billing, 'billing.customer.stripeId')
         let customerCard = _.get(billing, 'billing.customer.card')
         if (_.isNil(customerId)) throw new BadRequest(`updateSubscription: you must create a customer before subscribing to a product`)
         let billingMethod = 'send_invoice'
         if (!_.isNil(customerCard)) billingMethod = 'charge_automatically'
-        subscription['id'] = await this.createStripeSubscription(customerId, config.plans[data.plan].stripeId, billingMethod)
+        subscription['stripeId'] = await this.createStripeSubscription(customerId, config.plans[data.plan].stripeId, billingMethod)
       }
       const billingObjectService = app.getService(data.billingObjectService)
       await billingObjectService.patch(data.billingObjectId, { 'billing.subscription': subscription })
@@ -139,9 +139,9 @@ export default function (name, app, options) {
     async updateSubscription (plan, data) {
       debug('update subscripton for ' + data.billingObjectId + ' to plan ' + plan)
       let billing = await this.getBillingPerspective(data.billingObjectId, data.billingObjectService)
-      let customerId = _.get(billing, 'billing.customer.id')
+      let customerId = _.get(billing, 'billing.customer.stripeId')
       let customerCard = _.get(billing, 'billing.customer.card')
-      let subscriptionId = _.get(billing, 'billing.subscription.id')
+      let subscriptionId = _.get(billing, 'billing.subscription.stripeId')
       if (!_.isNil(subscriptionId)) {
         if (_.isNil(customerId)) throw new BadRequest(`updateSubscription: inconsistent billing perspective`)
         await this.removeStripeSubscription(customerId, subscriptionId)
@@ -151,7 +151,7 @@ export default function (name, app, options) {
         if (_.isNil(customerId)) throw new BadRequest(`updateSubscription: you must create a customer before subscribing to a product`)
         let billingMethod = 'send_invoice'
         if (!_.isNil(customerCard)) billingMethod = 'charge_automatically'
-        subscription['id'] = await this.createStripeSubscription(customerId, config.plans[plan].stripeId, billingMethod)
+        subscription['stripeId'] = await this.createStripeSubscription(customerId, config.plans[plan].stripeId, billingMethod)
       }
       const billingObjectService = app.getService(data.billingObjectService)
       await billingObjectService.patch(data.billingObjectId, { 'billing.subscription': subscription })
@@ -162,8 +162,8 @@ export default function (name, app, options) {
       let billing = await this.getBillingPerspective(query.billingObjectId, query.billingObjectService)
       let currentPlan = _.get(billing, 'billing.subscription.plan')
       if (currentPlan !== plan) throw new BadRequest(`removeSubscription: invalid plan`)
-      let customerId = _.get(billing, 'billing.customer.id')
-      let subscriptionId = _.get(billing, 'billing.subscription.id')
+      let customerId = _.get(billing, 'billing.customer.stripeId')
+      let subscriptionId = _.get(billing, 'billing.subscription.stripeId')
       if (!_.isNil(subscriptionId)) {
         if (_.isNil(customerId)) throw new BadRequest(`removeSubscription: inconsistent billing perspective`)
         await this.removeStripeSubscription(customerId, subscriptionId)
