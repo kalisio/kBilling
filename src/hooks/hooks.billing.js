@@ -37,7 +37,7 @@ export async function subscribeDefaultPlan (hook) {
   const billingService = hook.app.getService('billing')
   await billingService.create({
     action: 'subscription',
-    plan: 'bonze',
+    plan: 'bronze',
     billingObjectId: billingObjectId,
     billingObjectService: billingObjectService
   })
