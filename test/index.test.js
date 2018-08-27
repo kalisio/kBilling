@@ -66,6 +66,50 @@ describe('kBilling', () => {
   // Let enough time to process
   .timeout(10000)
 
+  it('can subscribe to a free plan without customer data', async () => {
+    subscriptionObject = await billingService.create({
+      action: 'subscription',
+      plan: 'bronze',
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    // Check user
+    userObject = await userService.get(userObject._id)
+    expect(userObject.billing.subscription.plan).to.equal('bronze')
+    expect(userObject.billing.subscription.id).to.equal(undefined)
+  })
+  // Let enough time to process
+  .timeout(10000)
+
+  it('cannot subscribe to a paying plan without customer data', (done) => {
+    billingService.update('silver', {
+      action: 'subscription',
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    .catch(error => {
+      expect(error).toExist()
+      expect(error.name).to.equal('BadRequest')
+      done()
+    })
+  })
+  // Let enough time to process
+  .timeout(10000)
+
+  it('unsubscribe from the plan', async () => {
+    await billingService.remove('bronze', {
+      query: {
+        action: 'subscription',
+        billingObjectId: userObject._id,
+        billingObjectService: 'users'
+      }
+    })
+    userObject = await userService.get(userObject._id)
+    assert.isNull(userObject.billing.subscription)
+  })
+  // Let enough time to process
+  .timeout(10000)
+
   it('create a customer without card', async () => {
     customerObject = await billingService.create({
       action: 'customer',
@@ -149,29 +193,61 @@ describe('kBilling', () => {
   // Let enough time to process
   .timeout(10000)
 
-  it('subscribe a customer to a plan', async () => {
+  it('subscribe to the silver plan', async () => {
     subscriptionObject = await billingService.create({
       action: 'subscription',
-      customerId: customerObject.id,
-      planId: 'plan_DHd5RMLMSlpUmQ',
+      plan: 'silver',
       billingObjectId: userObject._id,
       billingObjectService: 'users'
     })
     // Check user
     userObject = await userService.get(userObject._id)
     expect(userObject.billing.subscription.id === subscriptionObject.id)
-    expect(userObject.billing.subscription.plan.id === subscriptionObject.plan.id)
-    expect(userObject.billing.subscription.plan.id).to.equal('plan_DHd5RMLMSlpUmQ')
+    expect(userObject.billing.subscription.plan).to.equal('silver')
     // Check Stripe
     stripeSubscription = await subscriptionService.get(userObject.billing.subscription.id)
     expect(stripeSubscription).toExist()
     expect(stripeSubscription.billing).to.equal('charge_automatically')
+    expect(stripeSubscription.plan.id).to.equal('plan_DHd5HGwsl31NoC')
+  })
+  // Let enough time to process
+  .timeout(10000)
+
+  it('update the subscription to the gold plan', async () => {
+    subscriptionObject = await billingService.update('gold', {
+      action: 'subscription',
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    // Check user
+    userObject = await userService.get(userObject._id)
+    expect(userObject.billing.subscription.plan).to.equal('gold')
+    expect(userObject.billing.subscription.id === subscriptionObject.id)
+    // Check Stripe
+    stripeSubscription = await subscriptionService.get(userObject.billing.subscription.id)
+    expect(stripeSubscription).toExist()
+    expect(stripeSubscription.billing).to.equal('charge_automatically')
+    expect(stripeSubscription.plan.id).to.equal('plan_DHd5RMLMSlpUmQ')
+  })
+  // Let enough time to process
+  .timeout(10000)
+
+  it('update the subscription to the bronze plan', async () => {
+    subscriptionObject = await billingService.update('bronze', {
+      action: 'subscription',
+      billingObjectId: userObject._id,
+      billingObjectService: 'users'
+    })
+    // Check user
+    userObject = await userService.get(userObject._id)
+    expect(userObject.billing.subscription.plan).to.equal('bronze')
+    expect(userObject.billing.subscription.id).to.equal(undefined)
   })
   // Let enough time to process
   .timeout(10000)
 
   it('unsubscribe a customer from the plan', async () => {
-    await billingService.remove(subscriptionObject.id, {
+    await billingService.remove('bronze', {
       query: {
         action: 'subscription',
         billingObjectId: userObject._id,
@@ -209,16 +285,14 @@ describe('kBilling', () => {
   it('subscribe a customer to a plan', async () => {
     subscriptionObject = await billingService.create({
       action: 'subscription',
-      customerId: customerObject.id,
-      planId: 'plan_DHd5HGwsl31NoC',
+      plan: 'gold',
       billing: 'send_invoice',
       billingObjectId: userObject._id,
       billingObjectService: 'users'
     })
     userObject = await userService.get(userObject._id)
     expect(subscriptionObject.id === userObject.billing.subscription.id)
-    expect(subscriptionObject.plan.id === userObject.billing.subscription.plan.id)
-    expect(userObject.billing.subscription.plan.id).to.equal('plan_DHd5HGwsl31NoC')
+    expect(userObject.billing.subscription.plan).to.equal('gold')
     // Check Stripe
     let stripeSubscriptions = await subscriptionService.find({query: {customer: userObject.billing.customer.id}})
     expect(stripeSubscriptions.data.length).to.equals(1)
