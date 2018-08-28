@@ -8,7 +8,7 @@ export function defineBillingAbilities (subject, can, cannot) {
         if (role >= permissions.Roles.owner) {
           if (organisation._id) {
             can('service', 'billing')
-            can('all', 'billing', { billingObjectId: organisation._id })
+            can('all', 'billing', { billingObject: organisation._id })
           }
         }
       })
