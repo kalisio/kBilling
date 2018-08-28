@@ -53,8 +53,9 @@ export async function subscribeDefaultPlan (hook) {
   await billingService.create({
     action: 'subscription',
     plan: defaultPlan,
-    billingObjectId: billingObjectId,
-    billingObjectService: billingObjectService
+    billingObject: billingObjectId,
+    billingObjectService: billingObjectService,
+    billingPerspective: 'billing'
   })
   return hook
 }
