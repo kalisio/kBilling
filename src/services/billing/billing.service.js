@@ -54,7 +54,7 @@ export default function (name, app, options) {
       const cardService = app.service('billing/card')
       await cardService.remove(cardId, {customer: customerId})
     },
-    async updateBillingMethod (subscriptionId, billingMethod) {
+    async updateStripeBillingMethod (subscriptionId, billingMethod) {
       debug('update billing for subscription ' + subscriptionId + ' with method ' + billingMethod)
       let subscriptionData = { billing: billingMethod }
       if (billingMethod === 'send_invoice') subscriptionData['days_until_due'] = config.daysUntilInvoiceDue
@@ -88,7 +88,7 @@ export default function (name, app, options) {
           await this.removeStripeCard(customerId, stripeCustomer.sources.data[0].id)
           // Update subscription if needed
           if (stripeCustomer.subscriptions.total_count > 0) {
-            if (_.isNil(data.token)) await this.updateBillingMethod(stripeCustomer.subscriptions.data[0].id, 'send_invoice')
+            if (_.isNil(data.token)) await this.updateStripeBillingMethod(stripeCustomer.subscriptions.data[0].id, 'send_invoice')
           }
         }
         if (!_.isNil(data.token)) {
@@ -103,7 +103,7 @@ export default function (name, app, options) {
         customerObject = Object.assign(customerObject, {card: card})
         // Update subscription if needed
         if (stripeCustomer.subscriptions.total_count > 0) {
-          await this.updateBillingMethod(stripeCustomer.subscriptions.data[0].id, 'charge_automatically')
+          await this.updateStripeBillingMethod(stripeCustomer.subscriptions.data[0].id, 'charge_automatically')
         }
       }
       const billingObjectService = app.getService(data.billingObjectService)
@@ -120,8 +120,9 @@ export default function (name, app, options) {
       }
     },
     async createSubscription (data) {
-      if (_.isNil(data.plan)) throw new BadRequest(`createSubscription: missing 'plan' parameter`)
-      debug('create subscripton for ' + data.billingObjectId + ' to plan ' + data.plan)
+      let plan = _.get(data, 'plan')
+      if (_.isNil(plan)) throw new BadRequest(`createSubscription: missing 'plan' parameter`)
+      debug('create subscripton for ' + data.billingObjectId + ' to plan ' + plan)
       let subscription = { plan: data.plan }
       if (!_.isNil(config.plans[data.plan].stripeId)) {
         let billing = await this.getBillingPerspective(data.billingObjectId, data.billingObjectService)
@@ -130,15 +131,17 @@ export default function (name, app, options) {
         if (_.isNil(customerId)) throw new BadRequest(`updateSubscription: you must create a customer before subscribing to a product`)
         let billingMethod = 'send_invoice'
         if (!_.isNil(customerCard)) billingMethod = 'charge_automatically'
-        subscription['stripeId'] = await this.createStripeSubscription(customerId, config.plans[data.plan].stripeId, billingMethod)
+        subscription['stripeId'] = await this.createStripeSubscription(customerId, config.plans[plan].stripeId, billingMethod)
       }
       const billingObjectService = app.getService(data.billingObjectService)
       await billingObjectService.patch(data.billingObjectId, { 'billing.subscription': subscription })
       return subscription
     },
-    async updateSubscription (plan, data) {
-      debug('update subscripton for ' + data.billingObjectId + ' to plan ' + plan)
-      let billing = await this.getBillingPerspective(data.billingObjectId, data.billingObjectService)
+    async updateSubscription (billingObjectId, data) {
+      let plan = _.get(data, 'plan')
+      if (_.isNil(plan)) throw new BadRequest(`updateSubscription: missing 'plan' parameter`)
+      debug('update subscripton for ' + billingObjectId + ' to plan ' + plan)
+      let billing = await this.getBillingPerspective(billingObjectId, data.billingObjectService)
       let customerId = _.get(billing, 'billing.customer.stripeId')
       let customerCard = _.get(billing, 'billing.customer.card')
       let subscriptionId = _.get(billing, 'billing.subscription.stripeId')
@@ -154,14 +157,12 @@ export default function (name, app, options) {
         subscription['stripeId'] = await this.createStripeSubscription(customerId, config.plans[plan].stripeId, billingMethod)
       }
       const billingObjectService = app.getService(data.billingObjectService)
-      await billingObjectService.patch(data.billingObjectId, { 'billing.subscription': subscription })
+      await billingObjectService.patch(billingObjectId, { 'billing.subscription': subscription })
       return subscription
     },
-    async removeSubscription (plan, query, patch) {
+    async removeSubscription (billingObjectId, query, patch) {
       debug('remove subscription from ' + query.billingObjectId)
-      let billing = await this.getBillingPerspective(query.billingObjectId, query.billingObjectService)
-      let currentPlan = _.get(billing, 'billing.subscription.plan')
-      if (currentPlan !== plan) throw new BadRequest(`removeSubscription: invalid plan`)
+      let billing = await this.getBillingPerspective(billingObjectId, query.billingObjectService)
       let customerId = _.get(billing, 'billing.customer.stripeId')
       let subscriptionId = _.get(billing, 'billing.subscription.stripeId')
       if (!_.isNil(subscriptionId)) {
@@ -170,7 +171,7 @@ export default function (name, app, options) {
       }
       if (patch) {
         const billingObjectService = app.getService(query.billingObjectService)
-        await billingObjectService.patch(query.billingObjectId, { 'billing.subscription': null })
+        await billingObjectService.patch(billingObjectId, { 'billing.subscription': null })
       }
     },
     setup (app) {
@@ -181,7 +182,7 @@ export default function (name, app, options) {
       app.use('/billing/subscription', new Subscription({ secretKey: config.secretKey }))
       app.service('billing/subscription').hooks({ before: { all: disallow('external') } })
     },
-    // Used to perform service actions such as create a billing customer, subscription, charge etc.
+    // Used to perform service actions such as create a customer/subscription.
     async create (data, params) {
       debug(`billing service called for create action=${data.action}`)
       if (_.isNil(data.billingObjectId)) throw new BadRequest('create: missing billing object id')
@@ -195,13 +196,13 @@ export default function (name, app, options) {
           return subscription
       }
     },
-    // Used to perform service actions such as update a billing subscription etc.
+    // Used to perform service actions such as update a customer/subscription
     async update (id, data, params) {
       debug(`billing service called for update action=${data.action}`)
-      if (_.isNil(data.billingObjectId)) throw new BadRequest('create: missing billing object id')
       if (_.isNil(data.billingObjectService)) throw new BadRequest('update: missing billing object service')
       switch (data.action) {
         case 'customer':
+          if (_.isNil(data.billingObjectId)) throw new BadRequest('create: missing billing object id')
           let customer = await this.updateCustomer(id, data)
           return customer
         case 'subscription':
@@ -209,14 +210,14 @@ export default function (name, app, options) {
           return subscription
       }
     },
-    // Used to perform service actions such as remove a billing customer etc.
+    // Used to perform service actions such as remove a customer/subscription
     async remove (id, params) {
       const query = params.query
       debug(`billing service called for remove action=${query.action}`)
-      if (_.isNil(query.billingObjectId)) throw new BadRequest('create: missing billing object id')
       if (_.isNil(query.billingObjectService)) throw new BadRequest('remove: missing billing object service')
       switch (query.action) {
         case 'customer':
+          if (_.isNil(query.billingObjectId)) throw new BadRequest('create: missing billing object id')
           await this.removeCustomer(id, query, _.get(params, 'patch', true))
           break
         case 'subscription':

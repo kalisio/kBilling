@@ -82,9 +82,9 @@ describe('kBilling', () => {
   .timeout(10000)
 
   it('cannot subscribe to a paying plan without customer data', (done) => {
-    billingService.update('silver', {
+    billingService.update(userObject._id, {
       action: 'subscription',
-      billingObjectId: userObject._id,
+      plan: 'silver',
       billingObjectService: 'users'
     })
     .catch(error => {
@@ -97,10 +97,9 @@ describe('kBilling', () => {
   .timeout(10000)
 
   it('unsubscribe from the plan', async () => {
-    await billingService.remove('bronze', {
+    await billingService.remove(userObject._id, {
       query: {
         action: 'subscription',
-        billingObjectId: userObject._id,
         billingObjectService: 'users'
       }
     })
@@ -214,9 +213,9 @@ describe('kBilling', () => {
   .timeout(10000)
 
   it('update the subscription to the gold plan', async () => {
-    subscriptionObject = await billingService.update('gold', {
+    subscriptionObject = await billingService.update(userObject._id, {
       action: 'subscription',
-      billingObjectId: userObject._id,
+      plan: 'gold',
       billingObjectService: 'users'
     })
     // Check user
@@ -233,9 +232,9 @@ describe('kBilling', () => {
   .timeout(10000)
 
   it('update the subscription to the bronze plan', async () => {
-    subscriptionObject = await billingService.update('bronze', {
+    subscriptionObject = await billingService.update(userObject._id, {
       action: 'subscription',
-      billingObjectId: userObject._id,
+      plan: 'bronze',
       billingObjectService: 'users'
     })
     // Check user
@@ -247,10 +246,9 @@ describe('kBilling', () => {
   .timeout(10000)
 
   it('unsubscribe a customer from the plan', async () => {
-    await billingService.remove('bronze', {
+    await billingService.remove(userObject._id, {
       query: {
         action: 'subscription',
-        billingObjectId: userObject._id,
         billingObjectService: 'users'
       }
     })
