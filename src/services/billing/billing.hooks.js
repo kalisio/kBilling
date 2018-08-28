@@ -1,12 +1,14 @@
+import { populateBillingObject } from '../../hooks'
+
 module.exports = {
   before: {
     all: [],
     find: [],
     get: [],
-    create: [],
-    update: [],
+    create: [ populateBillingObject ],
+    update: [ populateBillingObject ],
     patch: [],
-    remove: []
+    remove: [ populateBillingObject ]
   },
 
   after: {

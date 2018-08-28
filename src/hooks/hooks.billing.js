@@ -1,6 +1,15 @@
 import makeDebug from 'debug'
 import _ from 'lodash'
+import { hooks } from 'kCore'
 const debug = makeDebug('kalisio:kBilling:billing:hooks')
+
+export function populateBillingObject (hook) {
+  if (hook.type !== 'before') {
+    throw new Error(`The 'populateBillingObject' hook should only be used as a 'before' hook.`)
+  }
+  debug('populateBillingObject')
+  return hooks.populateObject({ serviceField: 'billingObjectService', idField: 'billingObject', perspectiveField: 'billingPerspective', throwOnNotFound: true })(hook)
+}
 
 export async function removeBilling (hook) {
   if (hook.type !== 'after') {
@@ -11,15 +20,13 @@ export async function removeBilling (hook) {
   if (!_.isNil(customer)) {
     let billingObjectId = hook.result._id
     let billingObjectService = hook.service.path
-    let customerId = hook.result.billing.customer.stripeId
     debug('Removing billing from object ' + billingObjectId + ' of service ' + billingObjectService)
     const billingService = hook.app.getService('billing')
-    await billingService.remove(customerId, {
+    await billingService.remove(billingObjectId, {
       query: {
-        action: 'customer',
-        billingObjectId: billingObjectId,
-        billingObjectService: billingObjectService
+        action: 'customer'
       },
+      billingObject: hook.result,
       patch: false
     })
   }
