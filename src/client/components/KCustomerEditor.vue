@@ -120,8 +120,9 @@ export default {
     open (customer, purchasers) {
       this.customer = Object.assign({
         action: 'customer',
-        billingObjectId: this.billingObjectId,
-        billingObjectService: this.billingObjectService
+        billingObject: this.billingObjectId,
+        billingObjectService: this.billingObjectService,
+        billingPerspective: 'billing'
       }, customer)
       if (!_.isNil(this.customer.card)) this.hasCard = true
       // Updated the purchasers selection
@@ -145,7 +146,7 @@ export default {
         if (_.isNil(this.customer.stripeId)) {
           response = await billingService.create(this.customer)
         } else {
-          response = await billingService.update(this.customer.stripeId, this.customer)
+          response = await billingService.update(this.billingObjectId, this.customer)
         }
         this.$emit('customer-updated', response)
         this.close(done())

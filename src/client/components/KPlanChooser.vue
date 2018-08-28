@@ -16,7 +16,7 @@
           <q-card-separator />
           <q-card-actions align="end">
             <div v-if="properties.url || properties.route">
-              <q-btn flat @click="onSelectPlan(plan, properties)">{{$t('KPlanChooser.CLICK')}}</q-btn>
+              <q-btn flat @click="onPlanChanged(plan, properties)">{{$t('KPlanChooser.CLICK')}}</q-btn>
             </div>
             <div v-else>
               <q-btn v-show="plan !== value" flat :disable="properties.subscription && !hasCustomer" @click="onPlanChanged(plan, properties)">{{$t('KPlanChooser.SELECT')}}
@@ -96,9 +96,10 @@ export default {
                 await billingService.update(this.billingObjectId, {
                   action: 'subscription',
                   plan: plan,
-                  billingObjectService: this.billingObjectService
+                  billingObjectService: this.billingObjectService,
+                  billingPerspective: 'billing'
                 })
-                this.$emit('input', this.value)
+                this.$emit('input', plan)
               }
             },
             'Cancel'
