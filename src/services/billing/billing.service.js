@@ -6,7 +6,7 @@ import { BadRequest } from '@feathersjs/errors'
 
 const debug = makeDebug('kalisio:kBilling:billing:service')
 
-const propertiesToOmit = ['billingObjectId', 'billingObjectService', 'action']
+const propertiesToOmit = ['billingObject', 'billingObjectService', 'billingPerspective', 'action']
 
 function toStripeCustomerData (data) {
   if (_.isNil(data.email)) throw new BadRequest(`createCustomer: missing 'email' parameter`)
