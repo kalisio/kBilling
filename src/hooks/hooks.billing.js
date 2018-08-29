@@ -7,8 +7,14 @@ export function populateBillingObject (hook) {
   if (hook.type !== 'before') {
     throw new Error(`The 'populateBillingObject' hook should only be used as a 'before' hook.`)
   }
-  debug('populateBillingObject')
   return hooks.populateObject({ serviceField: 'billingObjectService', idField: 'billingObject', perspectiveField: 'billingPerspective', throwOnNotFound: true })(hook)
+}
+
+export function unpopulateBillingObject (hook) {
+  if (hook.type !== 'after') {
+    throw new Error(`The 'unpopulateBillingObject' hook should only be used as a 'after' hook.`)
+  }
+  return hooks.unpopulateObject({ serviceField: 'billingObjectService', idField: 'billingObject', perspectiveField: 'billingPerspective' })(hook)
 }
 
 export async function removeBilling (hook) {
