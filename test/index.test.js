@@ -421,7 +421,6 @@ describe('kBilling', () => {
   .timeout(10000)
 
   it('removes the test user', async () => {
-    console.log(userObject._id)
     await userService.remove(userObject._id, {
       user: userObject,
       checkAuthorisation: true
