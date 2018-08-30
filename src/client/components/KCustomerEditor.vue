@@ -16,7 +16,7 @@
               <span>&nbsp;XXXX-{{customer.card.last4}}</span>
             </div>
             <div class="col-1">
-              <q-btn flat round color="grey-7" @click="onCardCleared">
+              <q-btn id="clear-card-button" flat round color="grey-7" @click="onCardCleared">
                 <q-icon name="cancel" />
               </q-btn>
             </div>
@@ -171,7 +171,7 @@ export default {
     },
     onCardCleared () {
       _.unset(this.customer, 'card')
-      _.unset(this.card, 'token')
+      _.unset(this.customer, 'token')
       this.hasCard = false
     }
   },
