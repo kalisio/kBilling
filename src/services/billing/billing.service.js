@@ -35,7 +35,7 @@ export default function (name, app, options) {
     async removeStripeSubscription (customerId, subscriptionId) {
       debug('remove Stripe subscription ' + subscriptionId + ' from ' + customerId)
       const subscriptionService = app.service('billing/subscription')
-      await subscriptionService.remove(subscriptionId, {customer: customerId})
+      await subscriptionService.remove(subscriptionId, {customer: customerId, stripe: {}})
     },
     async createStripeCard (customerId, token) {
       debug('create card ' + token + ' for customer ' + customerId)
