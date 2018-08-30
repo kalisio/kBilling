@@ -70,7 +70,6 @@
     "@feathersjs/express": "^1.2.3",
     "@feathersjs/feathers": "^3.1.7",
     "@feathersjs/socketio": "^3.2.2",
-    "debug": "^2.6.4",
     "feathers-hooks-common": "^3.0.0",
     "feathers-stripe": "^0.4.1",
     "fs-extra": "^3.0.0",
