@@ -13,8 +13,7 @@ describe('kBilling', () => {
     // Register all default hooks for authorisation
     // Default rules for all users
     // permissions.defineAbilities.registerHook(permissions.defineUserAbilities)
-    // Then rules for billing
-    // TODO
+    // Then rules for billing if any
 
     app = kalisio()
     port = app.get('port')

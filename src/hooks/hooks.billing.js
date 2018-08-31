@@ -1,5 +1,6 @@
 import makeDebug from 'debug'
 import _ from 'lodash'
+import { Forbidden } from '@feathersjs/errors'
 import { hooks } from 'kCore'
 const debug = makeDebug('kalisio:kBilling:billing:hooks')
 
@@ -33,8 +34,23 @@ export async function removeBilling (hook) {
         action: 'customer'
       },
       billingObject: hook.result,
-      patch: false
+      patch: false,
+      user: hook.params.user
     })
+  }
+  return hook
+}
+export async function preventUnverifiedUser (hook) {
+  if (hook.type !== 'before') {
+    throw new Error(`The 'preventUnverifiedUser' hook should only be used as a 'before' hook.`)
+  }
+  debug('Cheching if user is verified')
+  if (_.isNil(hook.params.user)) {
+    throw new Error(`The 'preventUnverifiedUser' must be able to access the 'user' in 'params'.`)
+  }
+  const isVerified = _.get(hook.params.user, 'isVerified', false)
+  if (!isVerified) {
+    throw new Forbidden(`Forrbiden access on service 'billing': user must be verified`)
   }
   return hook
 }
@@ -43,7 +59,6 @@ export async function subscribeDefaultPlan (hook) {
   if (hook.type !== 'after') {
     throw new Error(`The 'subscribeDefaultPlan' hook should only be used as a 'after' hook.`)
   }
-
   let billingObjectId = hook.result._id
   let billingObjectService = hook.service.path
   debug('Subscribing object ' + billingObjectId + ' of service ' + billingObjectService + ' to default plan')
@@ -62,6 +77,8 @@ export async function subscribeDefaultPlan (hook) {
     billingObject: billingObjectId,
     billingObjectService: billingObjectService,
     billingPerspective: 'billing'
+  }, {
+    user: hook.params.user
   })
   return hook
 }
