@@ -1,6 +1,6 @@
 import chai, { util, expect, assert } from 'chai'
 import chailint from 'chai-lint'
-import core, { kalisio } from 'kCore' // hooks, permissions } from 'kCore'
+import core, { kalisio } from '@kalisio/kCore' // hooks, permissions } from '@kalisio/kCore'
 import billing, {hooks as billingHooks} from '../src'
 
 describe('kBilling', () => {

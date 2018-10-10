@@ -1,4 +1,4 @@
-import { permissions } from 'kCore/common'
+import { permissions } from '@kalisio/kCore/common'
 
 export function defineBillingAbilities (subject, can, cannot) {
   if (subject && subject._id) {
