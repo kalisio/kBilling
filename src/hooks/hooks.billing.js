@@ -1,7 +1,7 @@
 import makeDebug from 'debug'
 import _ from 'lodash'
 import { Forbidden } from '@feathersjs/errors'
-import { hooks } from '@kalisio/kCore'
+import { hooks } from '@kalisio/kdk-core'
 const debug = makeDebug('kalisio:kBilling:billing:hooks')
 
 export function populateBillingObject (hook) {
