@@ -12,9 +12,9 @@
 ## Installation
 
 ```
-npm install kBilling --save
+npm install @kalisio/kdk-billing --save
 // Or with Yarn
-yarn add kBilling
+yarn add @kalisio/kdk-billing
 ```
 
 ## Documentation
