@@ -90,7 +90,7 @@ export default {
           message: this.$t('KPlanChooser.CONFIRM_DIALOG_MESSAGE', { plan: 'plans.' + plan + '_LABEL' }),
           buttons: [
             {
-              label: 'Ok',
+              label: this.$t('OK'),
               handler: async () => {
                 const billingService = this.$api.getService('billing')
                 await billingService.update(this.billingObjectId, {
@@ -101,8 +101,9 @@ export default {
                 })
                 this.$emit('input', plan)
               }
-            },
-            'Cancel'
+            }, {
+              label: this.$t('CANCEL')
+            }
           ]
         })
       }
