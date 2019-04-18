@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.1.0](https://github.com/kalisio/kBilling/tree/v1.1.0) (2019-04-18)
+
+[Full Changelog](https://github.com/kalisio/kBilling/compare/v1.0.0...v1.1.0)
+
 ## [v1.0.0](https://github.com/kalisio/kBilling/tree/v1.0.0) (2018-10-11)
 
 [Full Changelog](https://github.com/kalisio/kBilling/compare/ee71e4740d55295e01b6498dbc83c4e5904ec0ac...v1.0.0)
