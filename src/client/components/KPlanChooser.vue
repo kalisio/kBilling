@@ -3,17 +3,17 @@
     <template v-for="(properties, plan) in plans">
       <div :id="plan + '-card'" class="col-xs-12 col-sm-6 col-md-6 col-lg-3 col-xl-3" :key="plan">
         <q-card :color="properties.color" >     
-          <q-card-title class="text-center">
+          <q-card-section class="text-center">
             <h4>{{$t('plans.' + plan + '_LABEL', quotas[plan])}}</h4>
             <h5 slot="subtitle">{{$t('plans.' + plan + '_PRICE', quotas[plan])}}</h5>
-          </q-card-title>
-          <q-card-separator inset />
-          <q-card-main class="text-center">
+          </q-card-section>
+          <q-separator inset />
+          <q-card-section class="text-center">
             <q-collapsible :label="$t('plans.' + plan + '_DESCRIPTION', quotas[plan])">
               <div v-html="$t('plans.' + plan + '_DETAILS', quotas[plan])" />
             </q-collapsible>
-          </q-card-main>
-          <q-card-separator />
+          </q-card-section>
+          <q-separator />
           <q-card-actions align="end">
             <div v-if="properties.url || properties.route">
               <q-btn :id="plan+ '-action'" flat @click="onPlanChanged(plan, properties)">{{$t('KPlanChooser.CLICK')}}</q-btn>
@@ -34,23 +34,10 @@
 </template>
 
 <script>
-import { openURL, QCard, QCardTitle, QCardActions, QCardSeparator, QCardMain, QCardMedia, QBtn, QIcon, QCollapsible, QTooltip, Dialog } from 'quasar'
+import { openURL, Dialog } from 'quasar'
 
 export default {
   name: 'k-plan-chooser',
-  components: {
-    QCard,
-    QCardTitle,
-    QCardActions,
-    QCardSeparator,
-    QCardMain,
-    QCardMedia,
-    QBtn,
-    QIcon,
-    QCollapsible,
-    QTooltip,
-    Dialog
-  },
   props: {
     billingObjectId: {
       type: String,
