@@ -75,23 +75,21 @@ export default {
         Dialog.create({
           title: this.$t('KPlanChooser.CONFIRM_DIALOG_TITLE'),
           message: this.$t('KPlanChooser.CONFIRM_DIALOG_MESSAGE', { plan: 'plans.' + plan + '_LABEL' }),
-          buttons: [
-            {
-              label: this.$t('OK'),
-              handler: async () => {
-                const billingService = this.$api.getService('billing')
-                await billingService.update(this.billingObjectId, {
-                  action: 'subscription',
-                  plan: plan,
-                  billingObjectService: this.billingObjectService,
-                  billingPerspective: 'billing'
-                })
-                this.$emit('input', plan)
-              }
-            }, {
-              label: this.$t('CANCEL')
-            }
-          ]
+          ok: {
+            label: this.$t('OK'),
+          },
+          cancel: {
+            label: this.$t('CANCEL')
+          }
+        }).onOk(async () => {
+          const billingService = this.$api.getService('billing')
+          await billingService.update(this.billingObjectId, {
+            action: 'subscription',
+            plan: plan,
+            billingObjectService: this.billingObjectService,
+            billingPerspective: 'billing'
+          })
+          this.$emit('input', plan)
         })
       }
     }
