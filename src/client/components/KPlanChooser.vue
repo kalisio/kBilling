@@ -2,19 +2,19 @@
   <div class="row">
     <template v-for="(properties, plan) in plans">
       <div :id="plan + '-card'" class="col-xs-12 col-sm-6 col-md-6 col-lg-3 col-xl-3" :key="plan">
-        <q-card :color="properties.color" >     
+        <q-card :class="'text-white bg-' + properties.color" >     
           <q-card-section class="text-center">
-            <h4>{{$t('plans.' + plan + '_LABEL', quotas[plan])}}</h4>
-            <h5 slot="subtitle">{{$t('plans.' + plan + '_PRICE', quotas[plan])}}</h5>
+            <div class="text-h4">{{$t('plans.' + plan + '_LABEL', quotas[plan])}}</div></br>
+            <q-chip square outline text-color="white" class="text-h5">{{$t('plans.' + plan + '_PRICE', quotas[plan])}}</q-chip>
           </q-card-section>
           <q-separator inset />
           <q-card-section class="text-center">
-            <q-collapsible :label="$t('plans.' + plan + '_DESCRIPTION', quotas[plan])">
+            <q-expansion-item :label="$t('plans.' + plan + '_DESCRIPTION', quotas[plan])">
               <div v-html="$t('plans.' + plan + '_DETAILS', quotas[plan])" />
-            </q-collapsible>
+            </q-expansion-item>
           </q-card-section>
           <q-separator />
-          <q-card-actions align="end">
+          <q-card-actions align="right">
             <div v-if="properties.url || properties.route">
               <q-btn :id="plan+ '-action'" flat @click="onPlanChanged(plan, properties)">{{$t('KPlanChooser.CLICK')}}</q-btn>
             </div>
@@ -75,6 +75,7 @@ export default {
         Dialog.create({
           title: this.$t('KPlanChooser.CONFIRM_DIALOG_TITLE'),
           message: this.$t('KPlanChooser.CONFIRM_DIALOG_MESSAGE', { plan: 'plans.' + plan + '_LABEL' }),
+          html: true,
           ok: {
             label: this.$t('OK'),
           },
