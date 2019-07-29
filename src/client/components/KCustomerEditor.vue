@@ -114,7 +114,7 @@ export default {
     },
     getButtons () {
       return [
-        { name: 'update-button', label: this.$t('KCustomerEditor.UPDATE_BUTTON'), color: 'primary', handler: (event, done) => this.onUpdateClicked(event, done) }
+        { name: 'update-button', label: this.$t('KCustomerEditor.UPDATE_BUTTON'), color: 'primary', handler: () => this.onUpdateClicked() }
       ]
     },
     open (customer, purchasers) {
@@ -132,10 +132,10 @@ export default {
       // Fill the editor
       this.$refs.form.fill(this.customer)
     },
-    close (onClose) {
-      this.$refs.modal.close(onClose)
+    close () {
+      this.$refs.modal.close()
     },
-    async onUpdateClicked (event, done) {
+    async onUpdateClicked () {
       let result = this.$refs.form.validate()
       if (result.isValid) {
         // Update the customer values
@@ -149,9 +149,7 @@ export default {
           response = await billingService.update(this.billingObjectId, this.customer)
         }
         this.$emit('customer-updated', response)
-        this.close(done())
-      } else {
-        done()
+        this.close()
       }
     },
     onCardUpdated (card) {
