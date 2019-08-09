@@ -4,7 +4,8 @@
       <div :id="plan + '-card'" class="col-xs-12 col-sm-6 col-md-3" :key="plan">
         <q-card :class="'text-white bg-' + properties.color" >     
           <q-card-section class="text-center">
-            <div class="text-h4">{{$t('plans.' + plan + '_LABEL', quotas[plan])}}</div></br>
+            <div class="text-h4">{{$t('plans.' + plan + '_LABEL', quotas[plan])}}</div>
+            <br>
             <q-chip square outline text-color="white" class="text-h5">{{$t('plans.' + plan + '_PRICE', quotas[plan])}}</q-chip>
           </q-card-section>
           <q-separator inset />
