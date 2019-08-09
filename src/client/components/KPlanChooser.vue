@@ -1,7 +1,7 @@
 <template>
   <div class="row">
     <template v-for="(properties, plan) in plans">
-      <div :id="plan + '-card'" class="col-xs-12 col-sm-6 col-md-6 col-lg-3 col-xl-3" :key="plan">
+      <div :id="plan + '-card'" class="col-xs-12 col-sm-6 col-md-3" :key="plan">
         <q-card :class="'text-white bg-' + properties.color" >     
           <q-card-section class="text-center">
             <div class="text-h4">{{$t('plans.' + plan + '_LABEL', quotas[plan])}}</div></br>
