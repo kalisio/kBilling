@@ -1,4 +1,5 @@
 var path = require('path')
+var winston = require('winston')
 var containerized = require('containerized')()
 
 var API_PREFIX = '/api'
@@ -24,10 +25,11 @@ module.exports = {
   },
   logs: {
     Console: {
-      colorize: true,
+      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
       level: 'verbose'
     },
     DailyRotateFile: {
+      format: winston.format.json(),
       filename: path.join(__dirname, '..', 'test-log-%DATE%.log'),
       datePattern: 'YYYY-MM-DD'
     }

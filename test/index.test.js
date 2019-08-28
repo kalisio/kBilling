@@ -1,7 +1,7 @@
 import chai, { util, expect, assert } from 'chai'
 import chailint from 'chai-lint'
-import core, { kalisio } from '@kalisio/kdk-core' // hooks, permissions } from '@kalisio/kdk-core'
-import billing, { hooks as billingHooks } from '../src'
+import core, { kalisio, hooks, permissions } from '@kalisio/kdk-core'
+import billing, { permissions as billingPermissions, hooks as billingHooks } from '../src'
 
 describe('kBilling', () => {
   let app, server, port,
@@ -12,10 +12,16 @@ describe('kBilling', () => {
 
     // Register all default hooks for authorisation
     // Default rules for all users
-    // permissions.defineAbilities.registerHook(permissions.defineUserAbilities)
+    permissions.defineAbilities.registerHook(permissions.defineUserAbilities)
     // Then rules for billing if any
-
+    permissions.defineAbilities.registerHook(billingPermissions.defineBillingAbilities)
+    
     app = kalisio()
+    // Register authorisation/log hook
+    app.hooks({
+      before: { all: [hooks.authorise] },
+      error: { all: hooks.log }
+    })
     port = app.get('port')
     // Register authorisation hook
     /* app.hooks({
