@@ -1,5 +1,7 @@
 import logger from 'loglevel'
-export * as mixins from './mixins'
+import * as mixins from './mixins'
+
+export { mixins }
 export * from '../common'
 
 export default function init () {

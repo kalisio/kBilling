@@ -5,10 +5,10 @@ module.exports = {
     all: [],
     find: [],
     get: [],
-    create: [ populateBillingObject ],
-    update: [ populateBillingObject ],
+    create: [populateBillingObject],
+    update: [populateBillingObject],
     patch: [],
-    remove: [ populateBillingObject ]
+    remove: [populateBillingObject]
   },
 
   after: {

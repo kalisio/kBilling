@@ -2,7 +2,7 @@
   <div class="row">
     <template v-for="(properties, plan) in plans">
       <div :id="plan + '-card'" class="col-xs-12 col-sm-6 col-md-3" :key="plan">
-        <q-card :class="'text-white bg-' + properties.color" >     
+        <q-card :class="'text-white bg-' + properties.color" >
           <q-card-section class="text-center">
             <div class="text-h4">{{$t('plans.' + plan + '_LABEL', quotas[plan])}}</div>
             <br>
@@ -78,7 +78,7 @@ export default {
           message: this.$t('KPlanChooser.CONFIRM_DIALOG_MESSAGE', { plan: 'plans.' + plan + '_LABEL' }),
           html: true,
           ok: {
-            label: this.$t('OK'),
+            label: this.$t('OK')
           },
           cancel: {
             label: this.$t('CANCEL')
@@ -98,4 +98,3 @@ export default {
   }
 }
 </script>
-

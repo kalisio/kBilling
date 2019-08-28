@@ -1,6 +1,6 @@
 <template>
   <k-modal ref="modal" :title="$t('KCustomerEditor.TITLE')" :toolbar="getToolbar()" :buttons="getButtons()" :route="false">
-    <div slot="modal-content"> 
+    <div slot="modal-content">
       <div class="column">
         <div>
           <k-form ref="form" :schema="getSchema()" />
@@ -75,36 +75,36 @@ export default {
   methods: {
     getSchema () {
       return {
-        '$schema': 'http://json-schema.org/draft-06/schema#',
-        '$id': 'http://kalisio.xyz/schemas/edit-customer',
-        'title': 'KCustomerEditor.TITLE',
-        'type': 'object',
-        'properties': {
-          'email': {
-            'type': 'string',
-            'field': {
-              'component': 'form/KSelectField',
-              'helper': 'KCustomerEditor.CUSTOMER_EMAIL_FIELD_HELPER',
-              'type': 'radio',
-              'options': []
+        $schema: 'http://json-schema.org/draft-06/schema#',
+        $id: 'http://kalisio.xyz/schemas/edit-customer',
+        title: 'KCustomerEditor.TITLE',
+        type: 'object',
+        properties: {
+          email: {
+            type: 'string',
+            field: {
+              component: 'form/KSelectField',
+              helper: 'KCustomerEditor.CUSTOMER_EMAIL_FIELD_HELPER',
+              type: 'radio',
+              options: []
             }
           },
-          'description': {
-            'type': 'string',
-            'field': {
-              'component': 'form/KTextareaField',
-              'helper': 'KCustomerEditor.CUSTOMER_DESCRIPTION_FIELD_HELPER'
+          description: {
+            type: 'string',
+            field: {
+              component: 'form/KTextareaField',
+              helper: 'KCustomerEditor.CUSTOMER_DESCRIPTION_FIELD_HELPER'
             }
           },
-          'vatNumber': {
-            'type': 'string',
-            'field': {
-              'component': 'form/KTextField',
-              'helper': 'KCustomerEditor.CUSTOMER_VAT_NUMBER_FIELD_HELPER'
+          vatNumber: {
+            type: 'string',
+            field: {
+              component: 'form/KTextField',
+              helper: 'KCustomerEditor.CUSTOMER_VAT_NUMBER_FIELD_HELPER'
             }
           }
         },
-        'required': ['email']
+        required: ['email']
       }
     },
     getToolbar () {
@@ -136,7 +136,7 @@ export default {
       this.$refs.modal.close()
     },
     async onUpdateClicked () {
-      let result = this.$refs.form.validate()
+      const result = this.$refs.form.validate()
       if (result.isValid) {
         // Update the customer values
         this.customer = Object.assign(this.customer, result.values)
