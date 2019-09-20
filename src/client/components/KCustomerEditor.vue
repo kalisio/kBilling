@@ -152,19 +152,18 @@ export default {
         this.close()
       }
     },
-    onCardUpdated (card) {
+    async onCardUpdated (card) {
       if (card.complete) {
         this.isCreatingCard = true
-        createToken(card).then(data => {
-          if (!_.isNil(data.token)) {
-            this.customer.card = {
-              last4: data.token.card.last4
-            }
-            this.customer.token = data.token.id
-            this.hasCard = true
+        const data = await createToken(card)
+        if (!_.isNil(data.token)) {
+          this.customer.card = {
+            last4: data.token.card.last4
           }
-          this.isCreatingCard = false
-        })
+          this.customer.token = data.token.id
+          this.hasCard = true
+        }
+        this.isCreatingCard = false
       }
     },
     onCardCleared () {
